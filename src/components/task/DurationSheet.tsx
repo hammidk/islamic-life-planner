@@ -10,7 +10,7 @@ interface DurationSheetProps {
   onClose: () => void;
 }
 
-const presets = [5, 10, 15];
+const presets = [5, 15, 30, 60];
 
 export function DurationSheet({ open, value, onSelect, onClose }: DurationSheetProps) {
   const isPreset = presets.some((p) => String(p) === value);

@@ -48,16 +48,6 @@ export function Settings() {
           } />
         
         <MenuRow
-          label="Привычки"
-          right={
-          <Toggle
-            checked={notify.habits}
-            onChange={(v) => setNotify((n) => ({ ...n, habits: v }))}
-            label="Напоминания о привычках" />
-
-          } />
-        
-        <MenuRow
           label="Вечерний дневник"
           right={
           <Toggle

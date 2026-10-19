@@ -49,25 +49,35 @@ export function formatTaskDate(date?: string): string {
   return format(d, 'd MMM', { locale: ru });
 }
 
+/** «Пн 10:00» перед названием — только если у дела есть и дата, и время */
+export function formatTimePrefix(task: Task): string | null {
+  const d = safeParseISO(task.date);
+  if (!d || !task.time) return null;
+  return `${weekdayShort[(d.getDay() + 6) % 7]} ${task.time}`;
+}
+
 /**
- * Мета-строка задачи: «Сб · 17.10, 11:00 · Каждый день · Вера».
- * Без даты остаётся только сфера; при showDate=false — время, повтор, сфера.
+ * Мета-строка задачи: «Сб · 17.10 · Каждый день · Вера».
+ * День и время дела с точным временем стоят перед названием (formatTimePrefix) и здесь не повторяются.
+ * Без даты остаётся только сфера; при showDate=false — повтор и сфера.
+ * withSphere=false — без сферы (её показывают отдельно, цветом сферы).
  */
-export function formatRowMeta(task: Task, options: {showDate?: boolean;} = {}): string {
+export function formatRowMeta(
+task: Task,
+options: {showDate?: boolean;withSphere?: boolean;} = {})
+: string {
   const showDate = options.showDate ?? true;
+  const withSphere = options.withSphere ?? true;
   const sphereName = spheres.find((s) => s.id === task.sphere)?.name ?? 'Прочее';
   const d = safeParseISO(task.date);
-  if (!d) return sphereName;
   const parts: string[] = [];
-  if (showDate) {
-    const day = weekdayShort[(d.getDay() + 6) % 7];
-    const date = format(d, 'dd.MM');
-    parts.push(day, task.time ? `${date}, ${task.time}` : date);
-  } else if (task.time) {
-    parts.push(task.time);
+  if (d) {
+    if (showDate && !task.time) {
+      parts.push(weekdayShort[(d.getDay() + 6) % 7], format(d, 'dd.MM'));
+    }
+    if (task.repeat && task.repeat.kind !== 'none') parts.push(formatRepeat(task.repeat));
   }
-  if (task.repeat && task.repeat.kind !== 'none') parts.push(formatRepeat(task.repeat));
-  parts.push(sphereName);
+  if (withSphere) parts.push(sphereName);
   return parts.join(' · ');
 }
 

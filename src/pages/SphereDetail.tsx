@@ -1,25 +1,27 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { FolderPlusIcon, PlusIcon } from 'lucide-react';
+import { ChevronRightIcon, ClockIcon, FolderPlusIcon, PlusIcon } from 'lucide-react';
 import { Shell, SubHeader } from '../components/Shell';
 import { BottomSheet } from '../components/BottomSheet';
 import { SheetOption } from '../components/task/SheetOption';
 import { SectionBlock } from '../components/sphere/SectionBlock';
-import { RecommendedHabits } from '../components/RecommendedHabits';
+import { SlotSheet } from '../components/sphere/SlotSheet';
 import { useApp } from '../contexts/AppContext';
 import { useQuickAdd } from '../contexts/QuickAddContext';
 import { spheres } from '../data/appData';
 import { compareOrder } from '../utils/taskOptions';
+import { formatDuration } from '../utils/prayer';
 import type { Task } from '../types';
 
 export function SphereDetail() {
   const { id } = useParams();
-  const { tasks, goals, sections, addSection, addTask, updateTask } = useApp();
+  const { tasks, goals, sections, addSection, addTask, updateTask, sphereSlots, setSphereSlot } = useApp();
   const { openQuickAdd } = useQuickAdd();
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [newSection, setNewSection] = useState<string | null>(null);
   const [moving, setMoving] = useState<Task | null>(null);
+  const [slotOpen, setSlotOpen] = useState(false);
 
   const sphere = spheres.find((s) => s.id === id);
 
@@ -70,6 +72,31 @@ export function SphereDetail() {
         `${sphereTasks.length} дел · ${sphereSections.length} разделов`
         } />
       
+
+      {sphere.id === 'rizq' ?
+      <>
+          <button
+          type="button"
+          onClick={() => setSlotOpen(true)}
+          className="mb-5 flex w-full items-center gap-3 rounded-card border border-line bg-surface px-4 py-3.5 text-left shadow-card transition-colors duration-150 ease-out hover:border-primary/40">
+          
+            <ClockIcon className="h-[17px] w-[17px] shrink-0" style={{ color: sphere.color }} strokeWidth={1.9} aria-hidden="true" />
+            <span className="min-w-0 flex-1 text-[15px] text-ink">Время в расписании</span>
+            <span className="shrink-0 text-[13.5px] tabular-nums text-muted">
+              {sphereSlots.rizq ?
+            `${sphereSlots.rizq.start} · ${formatDuration(sphereSlots.rizq.duration)}` :
+            'Не задано'}
+            </span>
+            <ChevronRightIcon className="h-4 w-4 shrink-0 text-muted" strokeWidth={1.8} aria-hidden="true" />
+          </button>
+          <SlotSheet
+          open={slotOpen}
+          slot={sphereSlots.rizq}
+          onSave={(slot) => setSphereSlot('rizq', slot)}
+          onClose={() => setSlotOpen(false)} />
+        
+        </> :
+      null}
 
       {sphereGoals.length > 0 ?
       <div className="mb-6 divide-y divide-line rounded-card border border-line bg-surface shadow-card">
@@ -167,8 +194,6 @@ export function SphereDetail() {
         <PlusIcon className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         Добавить дело подробно
       </button>
-
-      <RecommendedHabits sphereId={sphere.id} />
 
       <BottomSheet
         open={moving !== null}

@@ -1,5 +1,14 @@
 import { supabase } from '../lib/supabase';
-import type { ChecklistItem, Goal, Habit, JournalEntry, Section, Task } from '../types';
+import type {
+  ChecklistItem,
+  Goal,
+  Habit,
+  JournalEntry,
+  Section,
+  SphereId,
+  SphereSlot,
+  Task } from
+'../types';
 
 /** Всё, что принадлежит пользователю и сохраняется в облаке */
 export interface UserSnapshot {
@@ -11,6 +20,8 @@ export interface UserSnapshot {
   journal: JournalEntry[];
   checklists: Record<string, ChecklistItem[]>;
   prayersByDate: Record<string, Record<string, boolean>>;
+  /** время сфер в ежедневном расписании; в старых снимках поля нет */
+  sphereSlots: Partial<Record<SphereId, SphereSlot>>;
 }
 
 interface StoredSnapshot {
@@ -37,7 +48,8 @@ export const emptySnapshot = (): UserSnapshot => ({
   goals: [],
   journal: [],
   checklists: {},
-  prayersByDate: {}
+  prayersByDate: {},
+  sphereSlots: {}
 });
 
 const cacheKey = (userId: string) => `sirahdo.data.${userId}`;
@@ -46,6 +58,24 @@ const isRecord = (v: unknown): v is Record<string, unknown> =>
 typeof v === 'object' && v !== null && !Array.isArray(v);
 
 const arr = <T,>(v: unknown): T[] => Array.isArray(v) ? v as T[] : [];
+
+/** Оставляет только корректные слоты: «HH:MM» и положительная длительность */
+function normalizeSlots(raw: unknown): Partial<Record<SphereId, SphereSlot>> {
+  if (!isRecord(raw)) return {};
+  const slots: Partial<Record<SphereId, SphereSlot>> = {};
+  Object.entries(raw).forEach(([sphere, slot]) => {
+    if (
+    isRecord(slot) &&
+    typeof slot.start === 'string' &&
+    /^\d{2}:\d{2}$/.test(slot.start) &&
+    typeof slot.duration === 'number' &&
+    slot.duration > 0)
+    {
+      slots[sphere as SphereId] = { start: slot.start, duration: slot.duration };
+    }
+  });
+  return slots;
+}
 
 /** Защищает приложение от повреждённых или неполных данных */
 function normalize(raw: unknown): UserSnapshot | null {
@@ -75,7 +105,8 @@ function normalize(raw: unknown): UserSnapshot | null {
     {},
     prayersByDate: isRecord(raw.prayersByDate) ?
     raw.prayersByDate as Record<string, Record<string, boolean>> :
-    {}
+    {},
+    sphereSlots: normalizeSlots(raw.sphereSlots)
   };
 }
 

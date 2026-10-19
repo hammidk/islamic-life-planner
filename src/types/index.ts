@@ -88,6 +88,14 @@ export interface Task {
   completedAt?: string;
 }
 
+/** Время сферы в ежедневном расписании: «Удел» с 10:00 на 60 минут */
+export interface SphereSlot {
+  /** «HH:MM» */
+  start: string;
+  /** минуты */
+  duration: number;
+}
+
 /** Раздел (проект) внутри сферы: Сфера → Раздел → Задача → Подзадача */
 export interface Section {
   id: string;

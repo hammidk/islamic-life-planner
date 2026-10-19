@@ -5,23 +5,20 @@ import { useLive } from '../contexts/LiveDataContext';
 import { Shell, SubHeader } from '../components/Shell';
 import { useApp } from '../contexts/AppContext';
 import { formatDateLabel } from '../utils/calendar';
-import { historyIndexDate } from '../utils/habits';
 
 interface PastDay {
   date: string;
   done: number;
   total: number;
   prayers: number;
-  habits: number;
   journal: boolean;
 }
 
-/** «Выполнено 3 из 5 · намазов 4 · привычек 2 · запись в дневнике» */
+/** «Выполнено 3 из 5 · намазов 4 · запись в дневнике» */
 function summary(day: PastDay): string {
   const parts: string[] = [];
   if (day.total > 0) parts.push(`Выполнено ${day.done} из ${day.total}`);
   if (day.prayers > 0) parts.push(`намазов ${day.prayers}`);
-  if (day.habits > 0) parts.push(`привычек ${day.habits}`);
   if (day.journal) parts.push('запись в дневнике');
   const text = parts.join(' · ');
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -29,7 +26,7 @@ function summary(day: PastDay): string {
 
 export function History() {
   const navigate = useNavigate();
-  const { tasks, prayersDone, prayersByDate, habits, journal } = useApp();
+  const { tasks, prayersDone, prayersByDate, journal } = useApp();
   const { todayISO: APP_DATE, prayers, tahajjud } = useLive();
   const allPrayers = [{ id: 'tahajjud', name: 'Тахаджуд', time: tahajjud.start }, ...prayers];
 
@@ -41,13 +38,13 @@ export function History() {
   const todayDone = tasks.filter((t) => t.date === APP_DATE && t.status === 'done').length;
   const todayTotal = tasks.filter((t) => t.date === APP_DATE && t.status !== 'cancelled').length;
 
-  /** прошедшие дни собираются из реальных отметок: дела, намазы, привычки, дневник */
+  /** прошедшие дни собираются из реальных отметок: дела, намазы, дневник */
   const pastDays = useMemo(() => {
     const map = new Map<string, PastDay>();
     const day = (date: string): PastDay => {
       let entry = map.get(date);
       if (!entry) {
-        entry = { date, done: 0, total: 0, prayers: 0, habits: 0, journal: false };
+        entry = { date, done: 0, total: 0, prayers: 0, journal: false };
         map.set(date, entry);
       }
       return entry;
@@ -64,19 +61,12 @@ export function History() {
       const count = Object.values(marks).filter(Boolean).length;
       if (count > 0) day(date).prayers += count;
     });
-    habits.forEach((h) => {
-      h.history.forEach((v, i) => {
-        if (!v) return;
-        const date = historyIndexDate(h, i, APP_DATE);
-        if (date < APP_DATE) day(date).habits += 1;
-      });
-    });
     journal.forEach((e) => {
       if (e.date && e.date < APP_DATE) day(e.date).journal = true;
     });
 
     return [...map.values()].sort((a, b) => b.date.localeCompare(a.date));
-  }, [tasks, prayersByDate, habits, journal, APP_DATE]);
+  }, [tasks, prayersByDate, journal, APP_DATE]);
 
   return (
     <Shell nav>
@@ -165,8 +155,8 @@ export function History() {
 
       {pastDays.length === 0 ?
       <p className="mt-5 px-1 text-[13.5px] leading-relaxed text-muted">
-          Прошедших дней пока нет. Они появятся здесь, когда вы начнёте отмечать дела, намазы и
-          привычки.
+          Прошедших дней пока нет. Они появятся здесь, когда вы начнёте отмечать дела и
+          намазы.
         </p> :
 
       <p className="mt-5 px-1 text-[12.5px] leading-relaxed text-muted">

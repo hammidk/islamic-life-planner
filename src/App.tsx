@@ -11,8 +11,6 @@ import { SphereDetail } from './pages/SphereDetail';
 import { DayTasks } from './pages/DayTasks';
 import { TaskStats } from './pages/TaskStats';
 import { TaskDetail } from './pages/TaskDetail';
-import { Habits } from './pages/Habits';
-import { HabitStats } from './pages/HabitStats';
 import { Journal } from './pages/Journal';
 import { JournalHistory } from './pages/JournalHistory';
 import { JournalEntryPage } from './pages/JournalEntryPage';
@@ -40,8 +38,6 @@ export function App() {
                   <Route path="/sphere/:id" element={<SphereDetail />} />
                   <Route path="/tasks/stats" element={<TaskStats />} />
                   <Route path="/task/:id" element={<TaskDetail />} />
-                  <Route path="/habits" element={<Habits />} />
-                  <Route path="/habits/stats" element={<HabitStats />} />
                   <Route path="/journal" element={<Journal />} />
                   <Route path="/journal/history" element={<JournalHistory />} />
                   <Route path="/journal/entry/:id" element={<JournalEntryPage />} />

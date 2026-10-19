@@ -1,7 +1,8 @@
 import React from 'react';
 import { CheckIcon } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
-import { formatRowMeta } from '../utils/taskOptions';
+import { spheres } from '../data/appData';
+import { formatRowMeta, formatTimePrefix } from '../utils/taskOptions';
 import type { Task } from '../types';
 
 interface TaskRowProps {
@@ -14,14 +15,26 @@ interface TaskRowProps {
   onToggle?: () => void;
   /** показывать день недели и дату в мета-строке */
   showDate?: boolean;
+  /** название сферы цветом сферы */
+  sphereColor?: boolean;
 }
 
-export function TaskRow({ task, onOpen, right, checked, onToggle, showDate = true }: TaskRowProps) {
+export function TaskRow({
+  task,
+  onOpen,
+  right,
+  checked,
+  onToggle,
+  showDate = true,
+  sphereColor = false
+}: TaskRowProps) {
   const { toggleTask } = useApp();
   const done = checked ?? task.status === 'done';
   const inactive = task.status === 'cancelled';
   const note = task.description?.split('\n').find((line) => line.trim())?.trim();
-  const meta = formatRowMeta(task, { showDate });
+  const prefix = formatTimePrefix(task);
+  const meta = formatRowMeta(task, { showDate, withSphere: !sphereColor });
+  const sphere = sphereColor ? spheres.find((s) => s.id === task.sphere) ?? spheres[spheres.length - 1] : null;
 
   return (
     <div className="flex items-center gap-3 py-3">
@@ -48,10 +61,21 @@ export function TaskRow({ task, onOpen, right, checked, onToggle, showDate = tru
           done || inactive ? 'text-muted line-through' : 'text-ink'}`
           }>
           
+          {prefix ?
+          <span className="mr-1.5 text-[12.5px] tabular-nums text-muted no-underline">{prefix}</span> :
+          null}
           {task.title}
         </p>
         {note ? <p className="mt-0.5 truncate text-[12.5px] text-muted">{note}</p> : null}
-        <p className="mt-0.5 truncate text-[12.5px] text-muted">{meta}</p>
+        <p className="mt-0.5 truncate text-[12.5px] text-muted">
+          {meta}
+          {sphere ?
+          <span style={{ color: sphere.color }}>
+              {meta ? ' · ' : ''}
+              {sphere.name}
+            </span> :
+          null}
+        </p>
       </button>
 
       {task.duration ?

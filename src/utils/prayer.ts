@@ -1,5 +1,5 @@
 import { getLive } from './live';
-import type { PeriodId, Prayer, Task } from '../types';
+import type { PeriodId, Prayer } from '../types';
 
 const DAY = 24 * 60;
 
@@ -72,28 +72,6 @@ export function currentPeriodIndex(minutes: number): number {
   return Math.max(0, prayers.findIndex((p) => p.id === current.id));
 }
 
-export interface ScheduleSegment {
-  kind: 'busy' | 'free';
-  start: number;
-  end: number;
-  tasks: Task[];
-  /** для свободных: длительность, округлённая вниз до 5 минут */
-  freeMinutes?: number;
-}
-
-export interface PrayerInterval {
-  /** намаз, открывающий период */
-  prayer: Prayer;
-  /** намаз, закрывающий период (null — после Иша) */
-  endsWith: Prayer | null;
-  periodId: PeriodId;
-  start: number;
-  end: number;
-  segments: ScheduleSegment[];
-  /** задачи периода без точного времени */
-  untimed: Task[];
-}
-
 export const periodByPrayer: Record<string, PeriodId> = {
   fajr: 'untilDhuhr',
   dhuhr: 'untilAsr',
@@ -127,91 +105,4 @@ export function periodForTime(time: string | undefined, fallback: PeriodId): Per
     if (axis >= times[i]) index = i;
   }
   return periodByPrayer[prayers[index].id] ?? fallback;
-}
-
-const floor5 = (n: number) => Math.floor(n / 5) * 5;
-const ceil5 = (n: number) => Math.ceil(n / 5) * 5;
-
-/**
- * Раскладывает задачи дня по промежуткам между намазами: занято / свободно.
- * Промежуток — от начала намаза до начала следующего; после Иша — до начала Тахаджуда.
- * Задачи с точным временем встают на своё место по времени, независимо от выбранного периода.
- * Свободное время округляется вниз до 5 минут и показывается от MIN_FREE.
- * С options.fromMinutes (сегодня) прошедшие свободные промежутки отбрасываются,
- * а текущий начинается с «сейчас», округлённого вверх до 5 минут.
- */
-export function buildDaySchedule(
-tasks: Task[],
-options?: {fromMinutes?: number;})
-: PrayerInterval[] {
-  const active = tasks.filter((t) => t.status !== 'cancelled');
-  const { prayers, tahajjud } = getLive();
-  const now = options?.fromMinutes;
-  const tahajjudStart = toMinutes(tahajjud.start);
-  const nowAxis =
-  now === undefined ?
-  undefined :
-  !Number.isNaN(tahajjudStart) && now < tahajjudStart ?
-  now + DAY :
-  now;
-
-  const finalizeFree = (segments: ScheduleSegment[]): ScheduleSegment[] =>
-  segments.flatMap((s) => {
-    if (s.kind !== 'free') return [s];
-    let start = s.start;
-    if (nowAxis !== undefined) {
-      if (s.end <= nowAxis) return [];
-      if (start < nowAxis) start = ceil5(nowAxis);
-    }
-    const freeMinutes = floor5(s.end - start);
-    return freeMinutes >= MIN_FREE ? [{ ...s, start, freeMinutes }] : [];
-  });
-
-  return prayers.map((prayer, index) => {
-    const nextPrayer = prayers[index + 1] ?? null;
-    const start = toMinutes(prayer.time);
-    const end = nextPrayer ? toMinutes(nextPrayer.time) : DAY + toMinutes(tahajjud.start);
-    const periodId = periodByPrayer[prayer.id];
-
-    const timed = active.
-    filter((t) => Boolean(t.time)).
-    map((t) => ({ task: t, start: taskAxisMinutes(t.time as string) })).
-    filter((item) => item.start >= start && item.start < end).
-    map((item) => ({
-      ...item,
-      end: Math.min(end, item.start + (item.task.duration ?? DEFAULT_DURATION))
-    })).
-    sort((a, b) => a.start - b.start);
-
-    const segments: ScheduleSegment[] = [];
-    let cursor = start;
-
-    timed.forEach((item) => {
-      if (item.start > cursor) {
-        segments.push({ kind: 'free', start: cursor, end: item.start, tasks: [] });
-      }
-      const last = segments[segments.length - 1];
-      if (last && last.kind === 'busy' && item.start <= last.end) {
-        last.end = Math.max(last.end, item.end);
-        last.tasks.push(item.task);
-      } else {
-        segments.push({ kind: 'busy', start: item.start, end: item.end, tasks: [item.task] });
-      }
-      cursor = Math.max(cursor, item.end);
-    });
-
-    if (end > cursor) {
-      segments.push({ kind: 'free', start: cursor, end, tasks: [] });
-    }
-
-    return {
-      prayer,
-      endsWith: nextPrayer,
-      periodId,
-      start,
-      end,
-      segments: finalizeFree(segments),
-      untimed: active.filter((t) => t.period === periodId && !t.time)
-    };
-  });
 }

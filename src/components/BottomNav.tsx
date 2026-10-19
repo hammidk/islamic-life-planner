@@ -1,8 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { BookOpenIcon, CalendarDaysIcon, HomeIcon, PlusIcon, RepeatIcon } from 'lucide-react';
+import { BookOpenIcon, CalendarDaysIcon, HomeIcon, PlusIcon } from 'lucide-react';
 import { useQuickAdd } from '../contexts/QuickAddContext';
-import { todayISO } from '../utils/prayer';
 import type { TaskDraft } from '../contexts/TaskDraftContext';
 import type { SphereId } from '../types';
 
@@ -27,13 +26,6 @@ const items: NavItem[] = [
   match: (p) => p === '/week' || p.startsWith('/day/')
 },
 {
-  to: '/habits',
-  label: 'Привычки',
-  // одна и та же иконка привычек везде
-  Icon: RepeatIcon,
-  match: (p) => p.startsWith('/habits')
-},
-{
   to: '/journal',
   label: 'Дневник',
   Icon: BookOpenIcon,
@@ -43,13 +35,12 @@ const items: NavItem[] = [
 
 const sphereIds: SphereId[] = ['faith', 'rizq', 'health', 'family', 'ideas', 'other'];
 
-/** Пресет новой задачи по текущему экрану */
+/** Пресет новой задачи по текущему экрану: дата — только на экране конкретного дня */
 function presetFor(pathname: string): Partial<TaskDraft> {
   const sphere = pathname.match(/^\/sphere\/([^/]+)/)?.[1];
   if (sphere && (sphereIds as string[]).includes(sphere)) return { sphere: sphere as SphereId };
   const day = pathname.match(/^\/day\/(\d{4}-\d{2}-\d{2})/)?.[1];
   if (day) return { date: day };
-  if (pathname === '/today') return { date: todayISO() };
   return {};
 }
 

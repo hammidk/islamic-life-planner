@@ -33,6 +33,7 @@ import type {
   Section,
   Sphere,
   SphereId,
+  SphereSlot,
   Task } from
 '../types';
 
@@ -74,6 +75,10 @@ interface AppState {
   checklists: Record<string, ChecklistItem[]>;
   addChecklistItem: (targetId: string, title: string) => void;
   toggleChecklistItem: (targetId: string, itemId: string) => void;
+  /** время сфер в ежедневном расписании */
+  sphereSlots: Partial<Record<SphereId, SphereSlot>>;
+  /** null — убрать сферу из расписания */
+  setSphereSlot: (sphere: SphereId, slot: SphereSlot | null) => void;
   prayersDone: Record<string, boolean>;
   /** отметки намазов по датам: { 'YYYY-MM-DD': { fajr: true } } */
   prayersByDate: Record<string, Record<string, boolean>>;
@@ -126,6 +131,9 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     initial.prayersByDate
   );
   const [sections, setSections] = useState<Section[]>(initial.sections);
+  const [sphereSlots, setSphereSlots] = useState<Partial<Record<SphereId, SphereSlot>>>(
+    initial.sphereSlots
+  );
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(offline ? 'offline' : 'saved');
 
   const prayersDone = useMemo(
@@ -149,9 +157,10 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
       goals,
       journal: journalRaw,
       checklists,
-      prayersByDate
+      prayersByDate,
+      sphereSlots
     }),
-    [tasks, sections, habits, goals, journalRaw, checklists, prayersByDate]
+    [tasks, sections, habits, goals, journalRaw, checklists, prayersByDate, sphereSlots]
   );
 
   const snapshotRef = useRef(snapshot);
@@ -228,6 +237,7 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     setChecklists({});
     setPrayersByDate({});
     setSections([]);
+    setSphereSlots({});
     try {
       window.history.replaceState(null, '', '/');
     } catch {
@@ -328,6 +338,15 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     setPrayersByDate((prev) => {
       const day = prev[date] ?? {};
       return { ...prev, [date]: { ...day, [prayerId]: !day[prayerId] } };
+    });
+  }, []);
+
+  const setSphereSlot = useCallback((sphere: SphereId, slot: SphereSlot | null) => {
+    setSphereSlots((prev) => {
+      const next = { ...prev };
+      if (slot) next[sphere] = slot;else
+      delete next[sphere];
+      return next;
     });
   }, []);
 
@@ -440,6 +459,8 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     checklists,
     addChecklistItem,
     toggleChecklistItem,
+    sphereSlots,
+    setSphereSlot,
     prayersDone,
     prayersByDate,
     togglePrayer,

@@ -29,9 +29,12 @@ interface QuickAddSheetProps {
 const CLOSE_OFFSET = 90;
 const CLOSE_VELOCITY = 500;
 
+/** Чип — только иконка; выбранное значение показывается текстом рядом */
 function Chip({
   icon,
   label,
+  value,
+  ariaLabel,
   active,
   onClick
 
@@ -39,17 +42,21 @@ function Chip({
 
 
 
-}: {icon: React.ReactNode;label: string;active: boolean;onClick: () => void;}) {
+
+
+}: {icon: React.ReactNode;label: string;value?: string;ariaLabel?: string;active: boolean;onClick: () => void;}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-[13px] transition-colors duration-150 ease-out ${
+      aria-label={ariaLabel ?? (value ? `${label}: ${value}` : label)}
+      className={`flex h-[34px] min-w-[34px] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border text-[13px] transition-colors duration-150 ease-out ${
+      value ? 'px-3' : 'px-2.5'} ${
       active ? 'border-primary/40 bg-primary-tint text-primary' : 'border-line text-ink-soft hover:bg-canvas'}`
       }>
       
       {icon}
-      {label}
+      {value ? <span aria-hidden="true">{value}</span> : null}
     </button>);
 
 }
@@ -61,7 +68,7 @@ export function QuickAddSheet({ open, onDismiss, onExpand, onCommit }: QuickAddS
   const [sheet, setSheet] = useState<SheetKind>(null);
   const [added, setAdded] = useState(false);
   const sphere = spheres.find((s) => s.id === draft.sphere) ?? spheres[spheres.length - 1];
-  const iconClass = 'h-3.5 w-3.5';
+  const iconClass = 'h-4 w-4';
 
   useEffect(() => {
     if (!added) return;
@@ -89,7 +96,7 @@ export function QuickAddSheet({ open, onDismiss, onExpand, onCommit }: QuickAddS
 
   const dateLabel = draft.date ?
   `${formatTaskDate(draft.date)}${draft.time ? `, ${draft.time}` : ''}` :
-  'Дата';
+  undefined;
   const hasRepeat = Boolean(draft.repeat && draft.repeat.kind !== 'none');
   const canAdd = draft.title.trim().length > 0;
 
@@ -176,32 +183,38 @@ export function QuickAddSheet({ open, onDismiss, onExpand, onCommit }: QuickAddS
 
                 <div className="no-scrollbar -mx-5 mt-4 flex flex-nowrap gap-2 overflow-x-auto px-5">
                   <Chip
-                  icon={<CalendarIcon className={iconClass} strokeWidth={1.9} />}
-                  label={dateLabel}
+                  icon={<CalendarIcon className={iconClass} strokeWidth={1.9} aria-hidden="true" />}
+                  label="Дата и время"
+                  value={dateLabel}
                   active={Boolean(draft.date)}
                   onClick={() => setSheet('datetime')} />
                 
                   <Chip
-                  icon={<TimerIcon className={iconClass} strokeWidth={1.9} />}
-                  label={draft.duration ? `${draft.duration} мин` : 'Длительность'}
+                  icon={<TimerIcon className={iconClass} strokeWidth={1.9} aria-hidden="true" />}
+                  label="Длительность"
+                  value={draft.duration ? `${draft.duration} мин` : undefined}
                   active={Boolean(draft.duration)}
                   onClick={() => setSheet('duration')} />
                 
                   <Chip
-                  icon={<BellIcon className={iconClass} strokeWidth={1.9} />}
-                  label={draft.reminder ? formatReminder(draft.reminder) : 'Уведомление'}
+                  icon={<BellIcon className={iconClass} strokeWidth={1.9} aria-hidden="true" />}
+                  label="Уведомление"
+                  value={draft.reminder ? formatReminder(draft.reminder) : undefined}
                   active={Boolean(draft.reminder)}
                   onClick={() => setSheet('reminder')} />
                 
                   <Chip
-                  icon={<Repeat2Icon className={iconClass} strokeWidth={1.9} />}
-                  label={hasRepeat ? formatRepeat(draft.repeat) : 'Повтор'}
+                  icon={<Repeat2Icon className={iconClass} strokeWidth={1.9} aria-hidden="true" />}
+                  label="Повтор"
+                  value={hasRepeat ? formatRepeat(draft.repeat) : undefined}
                   active={hasRepeat}
                   onClick={() => setSheet('repeat')} />
                 
                   <Chip
                   icon={<SphereIcon id={sphere.id} color={sphere.color} className={iconClass} />}
-                  label={sphere.name}
+                  label="Сфера"
+                  ariaLabel={`Сфера: ${sphere.name}`}
+                  value={sphere.id !== 'other' ? sphere.name : undefined}
                   active={false}
                   onClick={() => setSheet('sphere')} />
                 

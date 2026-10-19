@@ -18,6 +18,7 @@ interface TaskItemProps {
   controls?: DragControls;
   completing: boolean;
   showDate: boolean;
+  sphereColor: boolean;
   onToggle: (task: Task) => void;
   onMenu: (task: Task) => void;
 }
@@ -28,6 +29,7 @@ function TaskWithChecklist({
   controls,
   completing,
   showDate,
+  sphereColor,
   onToggle,
   onMenu
 }: TaskItemProps) {
@@ -49,6 +51,7 @@ function TaskWithChecklist({
         <TaskRow
           task={task}
           showDate={showDate}
+          sphereColor={sphereColor}
           checked={completing || undefined}
           onToggle={() => onToggle(task)}
           onOpen={(t) => navigate(`/task/${t.id}`)}
@@ -97,6 +100,8 @@ interface DayTaskListProps {
   hideDone?: boolean;
   /** показывать дату в мета-строке */
   showDate?: boolean;
+  /** название сферы цветом сферы */
+  sphereColor?: boolean;
 }
 
 /** Список задач дня: перетаскивание, свайп-удаление, долгое нажатие, раскрываемые пункты */
@@ -105,7 +110,8 @@ export function DayTaskList({
   divider,
   surface = 'bg-surface',
   hideDone = false,
-  showDate = true
+  showDate = true,
+  sphereColor = false
 }: DayTaskListProps) {
   const { toggleTask, reorderTasks } = useApp();
   const [completing, setCompleting] = useState<string[]>([]);
@@ -139,6 +145,7 @@ export function DayTaskList({
           surface={surface}
           controls={controls}
           showDate={showDate}
+          sphereColor={sphereColor}
           completing={completing.includes(task.id)}
           onToggle={handleToggle}
           onMenu={setMenuTask} />

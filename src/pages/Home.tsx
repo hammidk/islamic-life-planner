@@ -1,11 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRightIcon, ListTodoIcon } from 'lucide-react';
+import { ListTodoIcon } from 'lucide-react';
 import { WeatherIcon } from '../components/WeatherIcon';
 import { Shell } from '../components/Shell';
 import { PrayerTimeline } from '../components/PrayerTimeline';
 import { SphereIcon } from '../components/SphereIcon';
 import { LocationBanner } from '../components/LocationBanner';
+import { WeekSwiper } from '../components/WeekSwiper';
 import { ProfileButton } from '../components/ProfileButton';
 import { useApp } from '../contexts/AppContext';
 import { useLive } from '../contexts/LiveDataContext';
@@ -83,7 +84,7 @@ export function Home() {
           
           Сферы жизни
         </h2>
-        <ul className="divide-y divide-line rounded-card border border-line bg-surface shadow-card">
+        <ul className="grid grid-cols-3 gap-2">
           {spheres.map((sphere) => {
             const count = open.filter((t) => t.sphere === sphere.id).length;
             return (
@@ -91,24 +92,24 @@ export function Home() {
                 <button
                   type="button"
                   onClick={() => navigate(`/sphere/${sphere.id}`)}
-                  className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors duration-150 ease-out hover:bg-canvas/60">
+                  aria-label={`${sphere.name}${count > 0 ? `, дел: ${count}` : ''}`}
+                  className="flex h-full w-full flex-col gap-3 rounded-card border border-line bg-surface px-3 py-3 text-left shadow-card transition-colors duration-150 ease-out hover:border-primary/40">
                   
-                  <SphereIcon id={sphere.id} color={sphere.color} className="h-[18px] w-[18px]" />
-                  <span className="min-w-0 flex-1 truncate text-[15px] text-ink">{sphere.name}</span>
-                  <span className="shrink-0 text-[13.5px] tabular-nums text-muted">
-                    {count > 0 ? count : ''}
+                  <span className="flex w-full items-center justify-between">
+                    <SphereIcon id={sphere.id} color={sphere.color} className="h-[18px] w-[18px]" />
+                    <span className="text-[13.5px] tabular-nums text-muted">
+                      {count > 0 ? count : ''}
+                    </span>
                   </span>
-                  <ChevronRightIcon
-                    className="h-4 w-4 shrink-0 text-muted"
-                    strokeWidth={1.8}
-                    aria-hidden="true" />
-                  
+                  <span className="text-[13.5px] leading-tight text-ink">{sphere.name}</span>
                 </button>
               </li>);
 
           })}
         </ul>
       </section>
+
+      <WeekSwiper />
     </Shell>);
 
 }
