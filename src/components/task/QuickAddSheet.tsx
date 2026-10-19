@@ -178,7 +178,7 @@ export function QuickAddSheet({ open, onDismiss, onExpand, onCommit }: QuickAddS
                 onChange={(e) => updateDraft({ description: e.target.value })}
                 placeholder="Добавить заметку"
                 aria-label="Заметка"
-                className="mt-1.5 w-full bg-transparent pl-[34px] text-[14px] text-ink-soft placeholder:text-muted/70 focus:outline-none" />
+                className="mt-1.5 w-full bg-transparent pl-[34px] text-[16px] text-ink-soft placeholder:text-muted/70 focus:outline-none" />
               
 
                 <div className="no-scrollbar -mx-5 mt-4 flex flex-nowrap gap-2 overflow-x-auto px-5">

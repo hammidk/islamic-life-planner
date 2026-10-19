@@ -9,16 +9,18 @@ export function LocationBanner() {
   if (locating || location?.confirmed) return null;
 
   return (
-    <div className="mb-3 flex items-center gap-2 rounded-card border border-line bg-surface py-2 pl-3.5 pr-2 shadow-card">
-      <MapPinIcon className="h-4 w-4 shrink-0 text-primary" strokeWidth={1.9} aria-hidden="true" />
-      <p className="min-w-0 flex-1 truncate text-[13px] text-ink-soft">
-        {location ?
-        <>
-            Показываем время для: <span className="font-medium text-ink">{location.city}</span>
-          </> :
+    <div className="mb-3 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 rounded-card border border-line bg-surface py-2 pl-3.5 pr-2 shadow-card">
+      <p className="flex min-w-0 flex-[1_1_12rem] items-center gap-2 text-[13px] leading-snug text-ink-soft">
+        <MapPinIcon className="h-4 w-4 shrink-0 text-primary" strokeWidth={1.9} aria-hidden="true" />
+        <span className="min-w-0">
+          {location ?
+          <>
+              Время намазов: <span className="font-medium text-ink">{location.city}</span>
+            </> :
 
-        'Выберите город для времён намазов'
-        }
+          'Выберите город для времён намазов'
+          }
+        </span>
       </p>
       {location ?
       <button

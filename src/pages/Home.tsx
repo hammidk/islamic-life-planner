@@ -13,11 +13,13 @@ import { useLive } from '../contexts/LiveDataContext';
 import { spheres } from '../data/appData';
 import { fromMinutes } from '../utils/prayer';
 
-const plural = (count: number): string => {
+/** «1 дело», «3 дела», «5 дел» */
+const tasksWord = (count: number): string => {
   const mod10 = count % 10;
   const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return 'one';
-  return 'many';
+  if (mod10 === 1 && mod100 !== 11) return 'дело';
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'дела';
+  return 'дел';
 };
 
 export function Home() {
@@ -46,29 +48,29 @@ export function Home() {
           <ListTodoIcon className="h-[18px] w-[18px]" strokeWidth={1.9} aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="flex items-baseline gap-2">
-            <span className="text-[17px] font-semibold tracking-[-0.01em]">Сегодня</span>
-            <span className="text-[17px] font-semibold tabular-nums">{todayOpen.length}</span>
-          </span>
-          <span className="mt-0.5 block text-[11.5px] leading-snug text-white/75">
-            {plural(todayOpen.length) === 'one' ? 'дело осталось на сегодня' : 'дел осталось на сегодня'}
+          <span className="block text-[17px] font-semibold tracking-[-0.01em]">Сегодня</span>
+          <span className="mt-0.5 block text-[12.5px] leading-snug text-white/80">
+            <span className="tabular-nums">{todayOpen.length}</span> {tasksWord(todayOpen.length)}{' '}
+            осталось
           </span>
         </span>
-        <span className="shrink-0 text-right">
-          <span className="block text-[11.5px] leading-tight text-white/75">{todayFullLabel}</span>
+        <span className="min-w-0 max-w-[55%] shrink-0 text-right">
+          <span className="block truncate text-[11.5px] leading-tight text-white/75">{todayFullLabel}</span>
           {hijriLabel ?
-          <span className="mt-0.5 block text-[11.5px] leading-tight text-white/60">
+          <span className="mt-0.5 block truncate text-[11.5px] leading-tight text-white/60">
               {hijriLabel}
             </span> :
           null}
           <span className="mt-1.5 block text-[20px] font-semibold leading-none tabular-nums text-white">
             {fromMinutes(minutes)}
           </span>
-          <span className="mt-1.5 flex items-center justify-end gap-1 whitespace-nowrap text-[12px] font-medium text-white/90">
+          <span className="mt-1.5 flex min-w-0 items-center justify-end gap-1 whitespace-nowrap text-[12px] font-medium text-white/90">
             {weather ?
             <>
                 <WeatherIcon icon={weather.icon} className="h-[13px] w-[13px] shrink-0" />
-                {weather.temp} · {weather.state}
+                <span className="truncate">
+                  {weather.temp} · {weather.state}
+                </span>
               </> :
 
             '—'

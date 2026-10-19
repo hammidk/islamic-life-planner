@@ -48,7 +48,7 @@ export function SlotSheet({ open, slot, onSave, onClose }: SlotSheetProps) {
           type="time"
           value={start}
           onChange={(e) => setStart(e.target.value)}
-          className="bg-transparent text-right text-[14.5px] text-ink-soft focus:outline-none" />
+          className="bg-transparent text-right text-[16px] text-ink-soft focus:outline-none" />
 
       </div>
 
@@ -82,7 +82,7 @@ export function SlotSheet({ open, slot, onSave, onClose }: SlotSheetProps) {
         onChange={(e) => setCustomValue(e.target.value)}
         placeholder="Минут"
         aria-label="Своя длительность в минутах"
-        className="mt-3 w-full rounded-xl border border-line bg-canvas px-3 py-2.5 text-[15px] text-ink focus:border-primary/50 focus:outline-none" /> :
+        className="mt-3 w-full rounded-xl border border-line bg-canvas px-3 py-2.5 text-[16px] text-ink focus:border-primary/50 focus:outline-none" /> :
 
       null}
 

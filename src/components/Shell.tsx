@@ -11,8 +11,8 @@ interface ShellProps {
 
 export function Shell({ children, nav = false }: ShellProps) {
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-[430px] flex-col bg-canvas">
-      <main className={`flex-1 px-5 pt-3 ${nav ? 'pb-32' : 'pb-10'}`}>{children}</main>
+    <div className="mx-auto flex min-h-full w-full min-w-0 max-w-[430px] flex-col bg-canvas">
+      <main className={`min-w-0 flex-1 px-5 pt-3 ${nav ? 'pb-[calc(8rem+env(safe-area-inset-bottom))]' : 'pb-10'}`}>{children}</main>
       {nav ? <BottomNav /> : null}
     </div>);
 

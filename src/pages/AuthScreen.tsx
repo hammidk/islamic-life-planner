@@ -60,7 +60,7 @@ export function AuthScreen() {
   };
 
   const inputClass =
-  'w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-[15px] text-ink placeholder:text-muted/70 transition-colors duration-150 ease-out focus:border-primary/50 focus:outline-none';
+  'w-full rounded-xl border border-line bg-surface px-3.5 py-[11px] text-[16px] text-ink placeholder:text-muted/70 transition-colors duration-150 ease-out focus:border-primary/50 focus:outline-none';
 
   return (
     <div className="flex min-h-screen w-full justify-center bg-[#ECEEEA] font-sans text-ink antialiased">

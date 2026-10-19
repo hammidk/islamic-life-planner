@@ -102,7 +102,7 @@ export function Checklist({ targetId, suggestions, tone = 'default' }: Checklist
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && add(title)}
             placeholder="Свой пункт"
-            className={`min-w-0 flex-1 bg-transparent text-[14px] focus:outline-none ${
+            className={`min-w-0 flex-1 bg-transparent text-[16px] focus:outline-none ${
             onPrimary ?
             'text-white placeholder:text-white/50' :
             'text-ink placeholder:text-muted/80'}`

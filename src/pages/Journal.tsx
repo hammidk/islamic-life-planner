@@ -100,7 +100,7 @@ export function Journal() {
               }}
               rows={3}
               placeholder="Напиши своими словами…"
-              className="mt-3 w-full resize-none bg-transparent text-[15px] leading-relaxed text-ink placeholder:text-muted/70 focus:outline-none" />
+              className="mt-3 w-full resize-none bg-transparent text-[16px] leading-relaxed text-ink placeholder:text-muted/70 focus:outline-none" />
             
             </label>
           )}

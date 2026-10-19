@@ -111,7 +111,7 @@ export function TaskDetailForm({ fields, onChange, checklist, checklistCount }: 
           placeholder="Добавить заметку"
           rows={3}
           aria-label="Заметки"
-          className="block w-full resize-none bg-transparent px-4 py-3 text-[15px] leading-relaxed text-ink placeholder:text-muted/80 focus:outline-none" />
+          className="block w-full resize-none bg-transparent px-4 py-3 text-[16px] leading-relaxed text-ink placeholder:text-muted/80 focus:outline-none" />
         
         <label className="flex w-full items-center gap-3 px-4 py-3.5">
           <LinkIcon className={`${iconClass} shrink-0 text-muted`} strokeWidth={1.8} aria-hidden="true" />
@@ -122,7 +122,7 @@ export function TaskDetailForm({ fields, onChange, checklist, checklistCount }: 
             onChange={(e) => onChange({ link: e.target.value })}
             placeholder="URL"
             aria-label="Ссылка"
-            className="min-w-0 flex-1 bg-transparent text-[15px] text-ink placeholder:text-muted/80 focus:outline-none" />
+            className="min-w-0 flex-1 bg-transparent text-[16px] text-ink placeholder:text-muted/80 focus:outline-none" />
           
         </label>
       </div>
@@ -187,7 +187,7 @@ export function TaskDetailForm({ fields, onChange, checklist, checklistCount }: 
             onChange={(e) => onChange({ intention: e.target.value })}
             placeholder="Ради чего это дело"
             rows={2}
-            className="mt-1 block w-full resize-none bg-transparent text-[15px] leading-relaxed text-ink placeholder:text-muted/70 focus:outline-none" />
+            className="mt-1 block w-full resize-none bg-transparent text-[16px] leading-relaxed text-ink placeholder:text-muted/70 focus:outline-none" />
           
         </label>
         <label className="block px-4 py-3">
@@ -197,7 +197,7 @@ export function TaskDetailForm({ fields, onChange, checklist, checklistCount }: 
             onChange={(e) => onChange({ result: e.target.value })}
             placeholder="Как поймёте, что сделано"
             rows={2}
-            className="mt-1 block w-full resize-none bg-transparent text-[15px] leading-relaxed text-ink placeholder:text-muted/70 focus:outline-none" />
+            className="mt-1 block w-full resize-none bg-transparent text-[16px] leading-relaxed text-ink placeholder:text-muted/70 focus:outline-none" />
           
         </label>
       </div>

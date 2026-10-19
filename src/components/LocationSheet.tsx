@@ -136,7 +136,7 @@ export function LocationSheet({ open, onClose }: LocationSheetProps) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Найти город"
           aria-label="Найти город"
-          className="min-w-0 flex-1 bg-transparent text-[15px] text-ink placeholder:text-muted/80 focus:outline-none" />
+          className="min-w-0 flex-1 bg-transparent text-[16px] text-ink placeholder:text-muted/80 focus:outline-none" />
         
       </label>
 

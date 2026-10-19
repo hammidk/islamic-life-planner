@@ -13,6 +13,9 @@ body,
 #root {
   height: 100%;
   width: 100%;
+  max-width: 100%;
+  /* clip, а не hidden: hidden делает body и #root прокручиваемыми блоками вместо окна */
+  overflow-x: clip;
 }
 body {
   background-color: #ECEEEA;

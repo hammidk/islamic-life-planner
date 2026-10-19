@@ -66,7 +66,7 @@ export function ReminderSheet({ open, time, value, onSelect, onClose }: Reminder
           value={customValue}
           onChange={(e) => setCustomValue(e.target.value.replace(/\D/g, ''))}
           placeholder="За сколько минут"
-          className="min-w-0 flex-1 rounded-xl border border-line bg-canvas px-3 py-3 text-[15px] text-ink focus:border-primary/50 focus:outline-none" /> :
+          className="min-w-0 flex-1 rounded-xl border border-line bg-canvas px-3 py-3 text-[16px] text-ink focus:border-primary/50 focus:outline-none" /> :
 
 
         <input
@@ -74,7 +74,7 @@ export function ReminderSheet({ open, time, value, onSelect, onClose }: Reminder
           type="time"
           value={customValue}
           onChange={(e) => setCustomValue(e.target.value)}
-          className="min-w-0 flex-1 rounded-xl border border-line bg-canvas px-3 py-3 text-[15px] text-ink focus:border-primary/50 focus:outline-none"
+          className="min-w-0 flex-1 rounded-xl border border-line bg-canvas px-3 py-3 text-[16px] text-ink focus:border-primary/50 focus:outline-none"
           aria-label="Время напоминания" />
 
         }

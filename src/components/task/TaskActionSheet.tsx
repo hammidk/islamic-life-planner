@@ -192,7 +192,7 @@ export function TaskActionSheet({ task, siblings, onClose }: TaskActionSheetProp
       value={t.date ?? ''}
       onChange={(e) => e.target.value && updateTask(t.id, { date: e.target.value })}
       aria-label="Своя дата"
-      className="mt-2 w-full rounded-xl border border-line bg-canvas px-3 py-3 text-[15px] text-ink focus:border-primary/50 focus:outline-none" />
+      className="mt-2 w-full rounded-xl border border-line bg-canvas px-3 py-3 text-[16px] text-ink focus:border-primary/50 focus:outline-none" />
     
     </>;
 

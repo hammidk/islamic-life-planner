@@ -81,7 +81,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Основная навигация"
-      className="pointer-events-none fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 px-4 pb-5">
+      className="pointer-events-none fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
       
       <div className="pointer-events-auto mx-auto flex items-center justify-between rounded-[26px] border border-line/80 bg-surface/95 px-2 py-1.5 shadow-nav backdrop-blur">
         {items.slice(0, 2).map(renderItem)}

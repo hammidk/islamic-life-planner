@@ -56,7 +56,7 @@ export function DraftChecklist({ items, onChange }: DraftChecklistProps) {
           onKeyDown={(e) => e.key === 'Enter' && add(title)}
           onBlur={() => add(title)}
           placeholder="Добавить пункт"
-          className="min-w-0 flex-1 bg-transparent text-[14px] text-ink placeholder:text-muted/80 focus:outline-none" />
+          className="min-w-0 flex-1 bg-transparent text-[16px] text-ink placeholder:text-muted/80 focus:outline-none" />
         
       </div>
     </div>);

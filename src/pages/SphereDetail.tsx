@@ -140,7 +140,7 @@ export function SphereDetail() {
           }}
           placeholder="Название раздела, например «Ремонт»"
           aria-label="Название раздела"
-          className="min-w-0 flex-1 bg-transparent text-[15px] text-ink placeholder:text-muted/80 focus:outline-none" />
+          className="min-w-0 flex-1 bg-transparent text-[16px] text-ink placeholder:text-muted/80 focus:outline-none" />
         
           <button
           type="button"

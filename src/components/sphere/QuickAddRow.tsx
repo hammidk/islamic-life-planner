@@ -25,7 +25,7 @@ export function QuickAddRow({ placeholder, onAdd }: QuickAddRowProps) {
         onKeyDown={(e) => e.key === 'Enter' && submit()}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="min-w-0 flex-1 bg-transparent text-[14.5px] text-ink placeholder:text-muted/80 focus:outline-none" />
+        className="min-w-0 flex-1 bg-transparent text-[16px] text-ink placeholder:text-muted/80 focus:outline-none" />
       
       {title.trim() ?
       <button

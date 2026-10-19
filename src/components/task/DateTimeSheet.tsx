@@ -66,7 +66,7 @@ export function DateTimeSheet({
           value={date && !isQuick ? date : ''}
           onChange={(e) => e.target.value && onChangeDate(e.target.value)}
           aria-label="Своя дата"
-          className="bg-transparent text-right text-[14.5px] text-ink-soft focus:outline-none" />
+          className="bg-transparent text-right text-[16px] text-ink-soft focus:outline-none" />
         
       </label>
 
@@ -79,7 +79,7 @@ export function DateTimeSheet({
           type="time"
           value={time}
           onChange={(e) => onChangeTime(e.target.value, e.target.value && !date ? todayISO() : date)}
-          className="bg-transparent text-right text-[14.5px] text-ink-soft focus:outline-none" />
+          className="bg-transparent text-right text-[16px] text-ink-soft focus:outline-none" />
         
         {time ?
         <button
