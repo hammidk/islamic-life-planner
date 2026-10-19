@@ -31,7 +31,7 @@ export function ReminderSheet({ open, time, value, onSelect, onClose }: Reminder
 
   return (
     <BottomSheet open={open} title="Напоминание" onClose={close}>
-      <p className="-mt-2 mb-2 text-[13px] text-muted">
+      <p className="mb-2 text-[13px] leading-snug text-muted">
         {relative ? `Относительно времени задачи · ${time}` : 'У задачи нет точного времени'}
       </p>
       <div className="-mx-3">

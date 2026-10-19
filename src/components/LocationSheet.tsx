@@ -100,12 +100,12 @@ export function LocationSheet({ open, onClose }: LocationSheetProps) {
   return (
     <BottomSheet open={open} title="Местоположение" onClose={onClose}>
       {location ?
-      <p className="-mt-2 mb-4 flex items-center gap-1.5 text-[13px] text-muted">
+      <p className="mb-4 flex items-center gap-1.5 text-[13px] text-muted">
           <MapPinIcon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.9} aria-hidden="true" />
           <span className="truncate">Сейчас: {location.city}</span>
         </p> :
 
-      <p className="-mt-2 mb-4 text-[13px] leading-relaxed text-muted">
+      <p className="mb-4 text-[13px] leading-relaxed text-muted">
           Не удалось определить город автоматически. Выберите его, чтобы рассчитать времена намазов.
         </p>
       }

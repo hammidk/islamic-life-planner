@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useDragControls } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
 import { XIcon } from 'lucide-react';
@@ -29,7 +30,8 @@ export function BottomSheet({ open, title, onClose, children }: BottomSheetProps
     if (info.offset.y > CLOSE_OFFSET || info.velocity.y > CLOSE_VELOCITY) onClose();
   };
 
-  return (
+  // портал в body: лист не зависит от отступов и transform родителей и всегда поверх нижней панели
+  return createPortal(
     <AnimatePresence>
       {open ?
       <motion.div
@@ -61,7 +63,7 @@ export function BottomSheet({ open, title, onClose, children }: BottomSheetProps
           dragElastic={{ top: 0, bottom: 0.9 }}
           dragTransition={{ bounceStiffness: 500, bounceDamping: 40 }}
           onDragEnd={onDragEnd}
-          className="relative flex max-h-[85%] w-full flex-col rounded-t-[24px] bg-surface">
+          className="relative flex max-h-[85%] w-full min-w-0 flex-col rounded-t-[24px] bg-surface supports-[height:100dvh]:max-h-[85dvh]">
           
             <div
             onPointerDown={(e) => dragControls.start(e)}
@@ -81,12 +83,14 @@ export function BottomSheet({ open, title, onClose, children }: BottomSheetProps
                 </button>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-8">
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-5 pb-[max(2rem,env(safe-area-inset-bottom))]">
               {children}
             </div>
           </motion.div>
         </motion.div> :
       null}
-    </AnimatePresence>);
+    </AnimatePresence>,
+    document.body
+  );
 
 }
