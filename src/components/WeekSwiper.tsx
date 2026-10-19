@@ -57,7 +57,7 @@ export function WeekSwiper() {
   };
 
   const renderWeek = (weekOffset: number) =>
-  <div key={weekOffset} className="grid w-1/3 shrink-0 grid-cols-7 gap-1 px-0.5">
+  <div key={weekOffset} className="grid w-1/3 shrink-0 grid-cols-7 gap-1 px-0.5 pb-1 pt-0.5">
       {weekOf(weekOffset).map((day) => {
       const dayTasks = active.filter((t) => t.date === day.date);
       const count = dayTasks.length;
@@ -71,11 +71,11 @@ export function WeekSwiper() {
           }}
           aria-label={`${day.weekday}, ${day.label}${count > 0 ? `, дел: ${count}` : ''}`}
           aria-current={day.isToday ? 'date' : undefined}
-          className={`flex flex-col items-center gap-1 rounded-2xl py-2 transition-colors duration-150 ease-out ${
-          day.isToday ? 'bg-primary-tint' : 'hover:bg-surface'}`
+          className={`flex min-w-0 flex-col items-center gap-1 rounded-xl border py-2 shadow-card transition-colors duration-150 ease-out ${
+          day.isToday ? 'border-primary/45 bg-primary-tint' : 'border-line bg-surface hover:border-primary/30'}`
           }>
 
-            <span className={`text-[11px] ${day.isToday ? 'font-medium text-primary' : 'text-muted'}`}>
+            <span className={`text-[11px] ${day.isToday ? 'font-medium text-primary' : 'text-ink-soft'}`}>
               {day.weekdayShort}
             </span>
             <span
