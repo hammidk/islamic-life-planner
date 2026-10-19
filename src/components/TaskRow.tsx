@@ -64,9 +64,8 @@ export function TaskRow({
           done || inactive ? 'text-muted line-through' : 'text-ink'}`
           }>
           
-          {prefix ?
-          <span className="mr-1.5 text-[12.5px] tabular-nums text-muted no-underline">{prefix}</span> :
-          null}
+          {/* префикс в том же текстовом элементе и тем же шрифтом — обрезается троеточием вместе с названием */}
+          {prefix ? `${prefix} ` : ''}
           {task.title}
         </p>
         {note ? <p className="mt-0.5 truncate text-[12.5px] text-muted">{note}</p> : null}

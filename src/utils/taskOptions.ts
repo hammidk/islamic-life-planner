@@ -49,16 +49,17 @@ export function formatTaskDate(date?: string): string {
   return format(d, 'd MMM', { locale: ru });
 }
 
-/** «Пн 10:00» перед названием — только если у дела есть и дата, и время */
+/** «Вт 10:00» или «Вт» (без времени) перед названием — если у дела есть дата */
 export function formatTimePrefix(task: Task): string | null {
   const d = safeParseISO(task.date);
-  if (!d || !task.time) return null;
-  return `${weekdayShort[(d.getDay() + 6) % 7]} ${task.time}`;
+  if (!d) return null;
+  const day = weekdayShort[(d.getDay() + 6) % 7];
+  return task.time ? `${day} ${task.time}` : day;
 }
 
 /**
  * Мета-строка задачи: «Сб · 17.10 · Каждый день · Вера».
- * День и время дела с точным временем стоят перед названием (formatTimePrefix) и здесь не повторяются.
+ * День недели и время стоят перед названием (formatTimePrefix); у дела с временем они здесь не повторяются.
  * Без даты остаётся только сфера; при showDate=false — повтор и сфера.
  * withSphere=false — без сферы (её показывают отдельно, цветом сферы).
  * withDuration — длительность в мета-строке вместо отдельной подписи справа.
