@@ -106,12 +106,10 @@ export function WeekSwiper() {
 
 
   return (
-    <section aria-labelledby="week-title" className="mt-7">
-      <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 id="week-title" className="text-[13px] font-medium uppercase tracking-[0.08em] text-muted">
-          Дни недели
-        </h2>
-        <span className="flex items-baseline gap-4">
+    <section aria-label="Дни недели" className="mt-7">
+      {/* только правые ссылки; фиксированная высота — строка не прыгает при появлении «К сегодня» */}
+      <div className="mb-2 flex h-5 items-center justify-end px-1">
+        <span className="flex items-center gap-4">
           {offset !== 0 ?
           <button
             type="button"
