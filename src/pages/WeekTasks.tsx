@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, Undo2Icon } from 'lucide-react';
 import { Shell } from '../components/Shell';
 import { ProfileButton } from '../components/ProfileButton';
 import { SegmentedControl } from '../components/SegmentedControl';
@@ -89,8 +89,22 @@ export function WeekTasks() {
         onChange={setView} />
       
 
+      {/* высота строки зарезервирована: появление кнопки не сдвигает календарь */}
+      <div className="mt-2 flex h-9 items-center justify-end">
+        {view === 'week' && weekOffset !== 0 || view === 'month' && monthOffset !== 0 ?
+        <button
+          type="button"
+          onClick={() => view === 'week' ? setWeekOffset(0) : setMonthOffset(0)}
+          className="flex items-center gap-1.5 rounded-full bg-primary-tint px-3.5 py-1.5 text-[13px] font-medium text-primary transition-transform duration-150 ease-out active:scale-95">
+          
+            <Undo2Icon className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+            {view === 'week' ? 'К текущей неделе' : 'К текущему месяцу'}
+          </button> :
+        null}
+      </div>
+
       {view === 'week' ?
-      <section aria-label="Неделя" className="mt-4">
+      <section aria-label="Неделя" className="mt-2">
           <div className="mb-1 flex items-center justify-between">
             <StepButton dir="prev" label="Предыдущая неделя" onClick={() => setWeekOffset((v) => v - 1)} />
             <button
@@ -142,7 +156,7 @@ export function WeekTasks() {
           </ul>
         </section> :
 
-      <section aria-label="Месяц" className="mt-4">
+      <section aria-label="Месяц" className="mt-2">
           <div className="mb-2 flex items-center justify-between">
             <StepButton dir="prev" label="Предыдущий месяц" onClick={() => setMonthOffset((v) => v - 1)} />
             <button
