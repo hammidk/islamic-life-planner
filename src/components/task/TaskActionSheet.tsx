@@ -115,14 +115,14 @@ export function TaskActionSheet({ task, siblings, onClose }: TaskActionSheetProp
             key={a.label}
             type="button"
             onClick={a.onClick}
-            className={`flex flex-col items-center gap-1.5 rounded-xl border py-3 text-[12.5px] transition-colors duration-150 ease-out ${
+            className={`flex min-w-0 flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-[12.5px] transition-colors duration-150 ease-out ${
             a.danger ?
             'border-[#EBCFC7] text-[#A44A3F] hover:bg-[#FBF1ED]' :
             'border-line text-ink-soft hover:bg-canvas'}`
             }>
             
               {a.icon}
-              {a.label}
+              <span className="max-w-full truncate">{a.label}</span>
             </button>
           )}
         </div>

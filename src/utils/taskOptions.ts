@@ -61,10 +61,11 @@ export function formatTimePrefix(task: Task): string | null {
  * День и время дела с точным временем стоят перед названием (formatTimePrefix) и здесь не повторяются.
  * Без даты остаётся только сфера; при showDate=false — повтор и сфера.
  * withSphere=false — без сферы (её показывают отдельно, цветом сферы).
+ * withDuration — длительность в мета-строке вместо отдельной подписи справа.
  */
 export function formatRowMeta(
 task: Task,
-options: {showDate?: boolean;withSphere?: boolean;} = {})
+options: {showDate?: boolean;withSphere?: boolean;withDuration?: boolean;} = {})
 : string {
   const showDate = options.showDate ?? true;
   const withSphere = options.withSphere ?? true;
@@ -77,6 +78,7 @@ options: {showDate?: boolean;withSphere?: boolean;} = {})
     }
     if (task.repeat && task.repeat.kind !== 'none') parts.push(formatRepeat(task.repeat));
   }
+  if (options.withDuration && task.duration) parts.push(`${task.duration} мин`);
   if (withSphere) parts.push(sphereName);
   return parts.join(' · ');
 }

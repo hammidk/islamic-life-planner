@@ -17,6 +17,8 @@ interface TaskRowProps {
   showDate?: boolean;
   /** название сферы цветом сферы */
   sphereColor?: boolean;
+  /** длительность в мета-строке, а не справа (тесные строки) */
+  durationInMeta?: boolean;
 }
 
 export function TaskRow({
@@ -26,18 +28,19 @@ export function TaskRow({
   checked,
   onToggle,
   showDate = true,
-  sphereColor = false
+  sphereColor = false,
+  durationInMeta = false
 }: TaskRowProps) {
   const { toggleTask } = useApp();
   const done = checked ?? task.status === 'done';
   const inactive = task.status === 'cancelled';
   const note = task.description?.split('\n').find((line) => line.trim())?.trim();
   const prefix = formatTimePrefix(task);
-  const meta = formatRowMeta(task, { showDate, withSphere: !sphereColor });
+  const meta = formatRowMeta(task, { showDate, withSphere: !sphereColor, withDuration: durationInMeta });
   const sphere = sphereColor ? spheres.find((s) => s.id === task.sphere) ?? spheres[spheres.length - 1] : null;
 
   return (
-    <div className="flex items-center gap-3 py-3">
+    <div className="flex min-w-0 items-center gap-3 py-3">
       <button
         type="button"
         onClick={() => onToggle ? onToggle() : toggleTask(task.id)}
@@ -78,7 +81,7 @@ export function TaskRow({
         </p>
       </button>
 
-      {task.duration ?
+      {task.duration && !durationInMeta ?
       <span className="shrink-0 text-[11.5px] tabular-nums text-muted">{task.duration} мин</span> :
       null}
       {right}

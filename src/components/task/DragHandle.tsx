@@ -19,7 +19,7 @@ export function DragHandle({ controls, label }: DragHandleProps) {
         controls.start(e);
       }}
       style={{ touchAction: 'none' }}
-      className="-mr-1 flex h-8 w-7 shrink-0 cursor-grab items-center justify-center rounded-lg text-muted/70 transition-colors duration-150 ease-out hover:text-ink-soft active:cursor-grabbing">
+      className="-mr-1 flex h-8 w-8 shrink-0 cursor-grab items-center justify-center rounded-lg text-muted/70 transition-colors duration-150 ease-out hover:text-ink-soft active:cursor-grabbing">
       
       <GripVerticalIcon className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
     </button>);
