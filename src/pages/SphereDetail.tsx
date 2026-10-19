@@ -81,8 +81,8 @@ export function SphereDetail() {
           className="mb-5 flex w-full items-center gap-3 rounded-card border border-line bg-surface px-4 py-3.5 text-left shadow-card transition-colors duration-150 ease-out hover:border-primary/40">
           
             <ClockIcon className="h-[17px] w-[17px] shrink-0" style={{ color: sphere.color }} strokeWidth={1.9} aria-hidden="true" />
-            <span className="min-w-0 flex-1 text-[15px] text-ink">Время в расписании</span>
-            <span className="shrink-0 text-[13.5px] tabular-nums text-muted">
+            <span className="min-w-0 flex-1 truncate text-[15px] text-ink">Время в расписании</span>
+            <span className="shrink-0 whitespace-nowrap text-[13.5px] tabular-nums text-muted">
               {sphereSlots.rizq ?
             `${sphereSlots.rizq.start} · ${formatDuration(sphereSlots.rizq.duration)}` :
             'Не задано'}
