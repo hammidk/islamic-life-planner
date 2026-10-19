@@ -124,7 +124,7 @@ export function WeekSwiper() {
             onClick={() => navigate('/week')}
             className="text-[13px] font-medium text-primary">
 
-            На неделю
+            Календарь
           </button>
         </span>
       </div>
