@@ -86,24 +86,23 @@ export function Home() {
           
           Сферы жизни
         </h2>
-        <ul className="grid grid-cols-3 gap-2">
+        {/* ряд без переноса: следующая карточка видна справа как подсказка прокрутки */}
+        <ul className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-px-5 px-5 pb-1">
           {spheres.map((sphere) => {
             const count = open.filter((t) => t.sphere === sphere.id).length;
             return (
-              <li key={sphere.id}>
+              <li key={sphere.id} className="shrink-0 snap-start">
                 <button
                   type="button"
                   onClick={() => navigate(`/sphere/${sphere.id}`)}
-                  aria-label={`${sphere.name}${count > 0 ? `, дел: ${count}` : ''}`}
-                  className="flex h-full w-full flex-col gap-3 rounded-card border border-line bg-surface px-3 py-3 text-left shadow-card transition-colors duration-150 ease-out hover:border-primary/40">
+                  aria-label={`${sphere.name}, дел: ${count}`}
+                  className="flex h-[68px] w-[92px] flex-col justify-between rounded-xl border border-line bg-surface px-2.5 py-2 text-left shadow-card transition-colors duration-150 ease-out hover:border-primary/40">
                   
                   <span className="flex w-full items-center justify-between">
-                    <SphereIcon id={sphere.id} color={sphere.color} className="h-[18px] w-[18px]" />
-                    <span className="text-[13.5px] tabular-nums text-muted">
-                      {count > 0 ? count : ''}
-                    </span>
+                    <SphereIcon id={sphere.id} color={sphere.color} className="h-[16px] w-[16px]" />
+                    <span className="text-[14px] font-medium tabular-nums text-ink-soft">{count}</span>
                   </span>
-                  <span className="text-[13.5px] leading-tight text-ink">{sphere.name}</span>
+                  <span className="line-clamp-2 text-[12.5px] leading-tight text-ink">{sphere.name}</span>
                 </button>
               </li>);
 
