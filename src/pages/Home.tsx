@@ -55,7 +55,10 @@ export function Home() {
           </span>
         </span>
         <span className="min-w-0 max-w-[55%] shrink-0 text-right">
-          <span className="block truncate text-[11.5px] leading-tight text-white/75">{todayFullLabel}</span>
+          <span className="block text-[11.5px] leading-tight text-white/75">
+            {/* год не нужен — экономит строку на узких экранах */}
+            {todayFullLabel.replace(/,?\s\d{4}(\s?г\.?)?$/, '')}
+          </span>
           {hijriLabel ?
           <span className="mt-0.5 block truncate text-[11.5px] leading-tight text-white/60">
               {hijriLabel}
