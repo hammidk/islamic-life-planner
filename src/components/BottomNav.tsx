@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { BookOpenIcon, CalendarDaysIcon, HomeIcon, PlusIcon } from 'lucide-react';
+import { BookOpenIcon, HomeIcon, PlusIcon } from 'lucide-react';
 import { useQuickAdd } from '../contexts/QuickAddContext';
 import type { TaskDraft } from '../contexts/TaskDraftContext';
 import type { SphereId } from '../types';
@@ -12,25 +12,21 @@ interface NavItem {
   match: (pathname: string) => boolean;
 }
 
-const items: NavItem[] = [
-{
+/** Слева от «+» — Главная (календарь открывается с Главной и подсвечивает её), справа — Дневник */
+const homeItem: NavItem = {
   to: '/',
   label: 'Главная',
   Icon: HomeIcon,
-  match: (p) => p === '/' || p === '/today' || p.startsWith('/sphere/')
-},
-{
-  to: '/week',
-  label: 'Календарь',
-  Icon: CalendarDaysIcon,
-  match: (p) => p === '/week' || p.startsWith('/day/')
-},
-{
+  match: (p) =>
+  p === '/' || p === '/today' || p.startsWith('/sphere/') || p === '/week' || p.startsWith('/day/')
+};
+
+const journalItem: NavItem = {
   to: '/journal',
   label: 'Дневник',
   Icon: BookOpenIcon,
   match: (p) => p.startsWith('/journal') || p === '/tasks/stats'
-}];
+};
 
 
 const sphereIds: SphereId[] = ['faith', 'rizq', 'health', 'family', 'ideas', 'other'];
@@ -84,7 +80,7 @@ export function BottomNav() {
       className="pointer-events-none fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
       
       <div className="pointer-events-auto mx-auto flex items-center justify-between rounded-[26px] border border-line/80 bg-surface/95 px-2 py-1.5 shadow-nav backdrop-blur">
-        {items.slice(0, 2).map(renderItem)}
+        {renderItem(homeItem)}
 
         <button
           type="button"
@@ -95,7 +91,7 @@ export function BottomNav() {
           <PlusIcon className="h-6 w-6" strokeWidth={2.2} aria-hidden="true" />
         </button>
 
-        {items.slice(2).map(renderItem)}
+        {renderItem(journalItem)}
       </div>
     </nav>);
 
