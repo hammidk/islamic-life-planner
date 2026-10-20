@@ -107,26 +107,25 @@ export function WeekSwiper() {
 
   return (
     <section aria-label="Дни недели" className="mt-7">
-      {/* только правые ссылки; фиксированная высота — строка не прыгает при появлении «К сегодня» */}
-      <div className="mb-2 flex h-5 items-center justify-end px-1">
-        <span className="flex items-center gap-4">
-          {offset !== 0 ?
-          <button
-            type="button"
-            onClick={() => setOffset(0)}
-            className="text-[13px] font-medium text-primary">
-
-              К сегодня
-            </button> :
-          null}
-          <button
-            type="button"
-            onClick={() => navigate('/week')}
-            className="text-[13px] font-medium text-primary">
-
-            Календарь
-          </button>
-        </span>
+      {/* «Календарь» слева (тот же отступ px-1, что у «Сферы жизни»), «К сегодня» справа;
+          фиксированная высота — строка не прыгает при появлении «К сегодня» */}
+      <div className="mb-2 flex h-5 items-center justify-between px-1">
+        <button
+          type="button"
+          onClick={() => navigate('/week')}
+          className="text-[13px] font-medium text-primary">
+          
+          Календарь
+        </button>
+        {offset !== 0 ?
+        <button
+          type="button"
+          onClick={() => setOffset(0)}
+          className="text-[13px] font-medium text-primary">
+          
+            К сегодня
+          </button> :
+        null}
       </div>
 
       <div ref={viewportRef} className="overflow-hidden">
