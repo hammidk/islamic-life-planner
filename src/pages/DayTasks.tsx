@@ -7,7 +7,8 @@ import { PrayerRow } from '../components/PrayerRow';
 import { PrayerTimesError } from '../components/PrayerTimesError';
 import { useApp } from '../contexts/AppContext';
 import { useLive } from '../contexts/LiveDataContext';
-import { useQuickAdd } from '../contexts/QuickAddContext';
+import { useInlineCreateHost, useQuickAdd } from '../contexts/QuickAddContext';
+import { InlineCreate } from '../components/task/InlineCreate';
 import { formatDateLabel } from '../utils/calendar';
 import { formatDuration, fromMinutes, getPrayerState, taskAxisMinutes } from '../utils/prayer';
 import { buildTodayPlan } from '../utils/todayPlan';
@@ -72,6 +73,7 @@ export function DayTasks() {
 function OtherDayView({ date }: {date: string;}) {
   const { tasks } = useApp();
   const { openQuickAdd } = useQuickAdd();
+  useInlineCreateHost({ date });
 
   const dayTasks = tasks.filter((t) => t.date === date && t.status !== 'cancelled');
   const timed = dayTasks.filter((t) => t.time).sort(byTime);
@@ -81,6 +83,7 @@ function OtherDayView({ date }: {date: string;}) {
   return (
     <Shell nav>
       <SubHeader title={formatDateLabel(date)} subtitle={`${dayTasks.length} дел`} />
+      <InlineCreate />
       {ordered.length > 0 ?
       <DayTaskList tasks={ordered} divider="divide-line" surface="bg-canvas" showDate={false} /> :
 
@@ -164,6 +167,8 @@ function DayEndRow({ entryId }: {entryId?: string;}) {
 function TodayView({ date }: {date: string;}) {
   const { tasks, journal, prayersDone, sphereSlots } = useApp();
   const { openQuickAdd } = useQuickAdd();
+  // «+» на «Сегодня» создаёт дело без даты (сфера «Прочее») карточкой вверху
+  useInlineCreateHost({});
   const { minutes, todayLabel, prayers, sunrise, tahajjud, status } = useLive();
   const todayEntry = journal.find((e) => e.date === date);
   const { next, until } = getPrayerState(minutes);
@@ -319,6 +324,8 @@ function TodayView({ date }: {date: string;}) {
           </> :
         null}
       </p>
+
+      <InlineCreate />
 
       {status === 'error' ?
       <div className="mt-3">

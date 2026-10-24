@@ -4,11 +4,15 @@ import { SectionBlock } from '../components/sphere/SectionBlock';
 import { useApp } from '../contexts/AppContext';
 import { spheres } from '../data/appData';
 import { compareOrder } from '../utils/taskOptions';
+import { useInlineCreateHost } from '../contexts/QuickAddContext';
+import { InlineCreate } from '../components/task/InlineCreate';
+import type { SphereId } from '../types';
 
 /** Один раздел сферы: /sphere/:id/section/:sectionId */
 export function SectionDetail() {
   const { id, sectionId } = useParams();
   const { tasks, sections, addTask } = useApp();
+  useInlineCreateHost(id && sectionId ? { sphere: id as SphereId, sectionId } : {});
 
   const sphere = spheres.find((s) => s.id === id);
   const section = sections.find((s) => s.id === sectionId && s.sphere === id);
@@ -36,6 +40,7 @@ export function SectionDetail() {
   return (
     <Shell nav>
       <SubHeader title={section.title} subtitle={sphere.name} />
+      <InlineCreate />
       <SectionBlock
         tasks={topLevel}
         subtasksOf={subtasksOf}

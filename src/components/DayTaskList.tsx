@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ChevronDownIcon } from 'lucide-react';
 import type { DragControls } from 'framer-motion';
 import { TaskRow } from './TaskRow';
@@ -8,7 +7,9 @@ import { GestureTaskRow } from './task/GestureTaskRow';
 import { ReorderableList } from './task/ReorderableList';
 import { DragHandle } from './task/DragHandle';
 import { TaskActionSheet } from './task/TaskActionSheet';
+import { InlineEdit } from './task/InlineEdit';
 import { useApp } from '../contexts/AppContext';
+import { useQuickAdd } from '../contexts/QuickAddContext';
 import { taskChecklistSuggestions } from '../data/taskValues';
 import type { Task } from '../types';
 
@@ -33,12 +34,14 @@ function TaskWithChecklist({
   onToggle,
   onMenu
 }: TaskItemProps) {
-  const navigate = useNavigate();
   const { checklists, deleteTask } = useApp();
+  const { editingId, startEdit } = useQuickAdd();
   const [open, setOpen] = useState(false);
 
   const items = checklists[task.id] ?? [];
   const doneItems = items.filter((i) => i.done).length;
+
+  if (editingId === task.id) return <InlineEdit task={task} />;
 
   return (
     <div>
@@ -54,7 +57,7 @@ function TaskWithChecklist({
           sphereColor={sphereColor}
           checked={completing || undefined}
           onToggle={() => onToggle(task)}
-          onOpen={(t) => navigate(`/task/${t.id}`)}
+          onOpen={(t) => startEdit(t.id)}
           right={
           <span className="flex shrink-0 items-center">
               <button

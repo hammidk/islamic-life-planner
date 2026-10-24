@@ -1,12 +1,13 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { CalendarCheckIcon, CalendarPlusIcon, FolderInputIcon } from 'lucide-react';
 import type { DragControls } from 'framer-motion';
 import { TaskRow } from '../TaskRow';
 import { GestureTaskRow } from '../task/GestureTaskRow';
 import { ReorderableList } from '../task/ReorderableList';
 import { DragHandle } from '../task/DragHandle';
+import { InlineEdit } from '../task/InlineEdit';
 import { useApp } from '../../contexts/AppContext';
+import { useQuickAdd } from '../../contexts/QuickAddContext';
 import { useLive } from '../../contexts/LiveDataContext';
 import type { Task } from '../../types';
 
@@ -44,12 +45,15 @@ function TodayToggle({ task }: {task: Task;}) {
 
 /** Задача сферы с вложенными подзадачами; обе ступени перетаскиваются в пределах своего уровня */
 export function SphereTaskItem({ task, subtasks, onMove, onMenu, controls }: SphereTaskItemProps) {
-  const navigate = useNavigate();
   const { deleteTask, reorderTasks } = useApp();
-  const open = (t: Task) => navigate(`/task/${t.id}`);
+  const { editingId, startEdit } = useQuickAdd();
+  const open = (t: Task) => startEdit(t.id);
 
   return (
     <div>
+      {editingId === task.id ?
+      <InlineEdit task={task} /> :
+
       <GestureTaskRow
         surface="bg-surface"
         label={task.title}
@@ -79,6 +83,7 @@ export function SphereTaskItem({ task, subtasks, onMove, onMenu, controls }: Sph
           } />
         
       </GestureTaskRow>
+      }
       {subtasks.length > 0 ?
       <div className="mb-2 ml-3 border-l border-line pl-4">
           <ReorderableList
@@ -87,6 +92,9 @@ export function SphereTaskItem({ task, subtasks, onMove, onMenu, controls }: Sph
           onReorder={reorderTasks}
           itemClassName="bg-surface"
           renderItem={(sub, subControls) =>
+          editingId === sub.id ?
+          <InlineEdit task={sub} /> :
+
           <GestureTaskRow
             surface="bg-surface"
             label={sub.title}

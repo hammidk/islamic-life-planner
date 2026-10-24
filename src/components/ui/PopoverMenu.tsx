@@ -22,7 +22,7 @@ interface PopoverMenuProps {
   label: string;
 }
 
-const WIDTH = 264;
+const WIDTH = 340;
 const MARGIN = 12;
 const ROW = 44;
 

@@ -7,16 +7,18 @@ import { SheetOption } from '../components/task/SheetOption';
 import { SectionBlock } from '../components/sphere/SectionBlock';
 import { SlotSheet } from '../components/sphere/SlotSheet';
 import { useApp } from '../contexts/AppContext';
-import { useQuickAdd } from '../contexts/QuickAddContext';
+import { useInlineCreateHost, useQuickAdd } from '../contexts/QuickAddContext';
+import { InlineCreate } from '../components/task/InlineCreate';
 import { spheres } from '../data/appData';
 import { compareOrder } from '../utils/taskOptions';
 import { formatDuration } from '../utils/prayer';
-import type { Task } from '../types';
+import type { SphereId, Task } from '../types';
 
 export function SphereDetail() {
   const { id } = useParams();
   const { tasks, goals, sections, addSection, addTask, updateTask, sphereSlots, setSphereSlot } = useApp();
   const { openQuickAdd } = useQuickAdd();
+  useInlineCreateHost(id ? { sphere: id as SphereId } : {});
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [newSection, setNewSection] = useState<string | null>(null);
@@ -72,6 +74,8 @@ export function SphereDetail() {
         `${sphereTasks.length} дел · ${sphereSections.length} разделов`
         } />
       
+
+      <InlineCreate />
 
       {sphere.id === 'rizq' ?
       <>

@@ -1,20 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useDragControls } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
-import {
-  BellIcon,
-  CalendarIcon,
-  CheckIcon,
-  InfoIcon,
-  Repeat2Icon,
-  TimerIcon } from
-'lucide-react';
-import { TaskSheets } from './TaskSheets';
-import type { SheetKind } from './TaskSheets';
-import { SphereIcon } from '../SphereIcon';
+import { CheckIcon } from 'lucide-react';
+import { TaskComposer } from './TaskComposer';
 import { useTaskDraft } from '../../contexts/TaskDraftContext';
-import { spheres } from '../../data/appData';
-import { formatReminder, formatRepeat, formatTaskDate } from '../../utils/taskOptions';
 
 interface QuickAddSheetProps {
   open: boolean;
@@ -29,46 +18,11 @@ interface QuickAddSheetProps {
 const CLOSE_OFFSET = 90;
 const CLOSE_VELOCITY = 500;
 
-/** Чип — только иконка; выбранное значение показывается текстом рядом */
-function Chip({
-  icon,
-  label,
-  value,
-  ariaLabel,
-  active,
-  onClick
-
-
-
-
-
-
-
-}: {icon: React.ReactNode;label: string;value?: string;ariaLabel?: string;active: boolean;onClick: () => void;}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={ariaLabel ?? (value ? `${label}: ${value}` : label)}
-      className={`flex h-[34px] min-w-[34px] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border text-[13px] transition-colors duration-150 ease-out ${
-      value ? 'px-3' : 'px-2.5'} ${
-      active ? 'border-primary/40 bg-primary-tint text-primary' : 'border-line text-ink-soft hover:bg-canvas'}`
-      }>
-      
-      {icon}
-      {value ? <span aria-hidden="true">{value}</span> : null}
-    </button>);
-
-}
-
 export function QuickAddSheet({ open, onDismiss, onExpand, onCommit }: QuickAddSheetProps) {
   const { draft, updateDraft } = useTaskDraft();
   const dragControls = useDragControls();
   const titleRef = useRef<HTMLInputElement>(null);
-  const [sheet, setSheet] = useState<SheetKind>(null);
   const [added, setAdded] = useState(false);
-  const sphere = spheres.find((s) => s.id === draft.sphere) ?? spheres[spheres.length - 1];
-  const iconClass = 'h-4 w-4';
 
   useEffect(() => {
     if (!added) return;
@@ -77,10 +31,7 @@ export function QuickAddSheet({ open, onDismiss, onExpand, onCommit }: QuickAddS
   }, [added]);
 
   useEffect(() => {
-    if (!open) {
-      setSheet(null);
-      setAdded(false);
-    }
+    if (!open) setAdded(false);
   }, [open]);
 
   const submit = () => {
@@ -94,10 +45,6 @@ export function QuickAddSheet({ open, onDismiss, onExpand, onCommit }: QuickAddS
     if (info.offset.y > CLOSE_OFFSET || info.velocity.y > CLOSE_VELOCITY) onDismiss();
   };
 
-  const dateLabel = draft.date ?
-  `${formatTaskDate(draft.date)}${draft.time ? `, ${draft.time}` : ''}` :
-  undefined;
-  const hasRepeat = Boolean(draft.repeat && draft.repeat.kind !== 'none');
   const canAdd = draft.title.trim().length > 0;
 
   return (
@@ -148,77 +95,23 @@ export function QuickAddSheet({ open, onDismiss, onExpand, onCommit }: QuickAddS
               }}
               className="px-5">
               
-                <div className="flex items-center gap-3">
-                  <span
-                  className="h-[22px] w-[22px] shrink-0 rounded-full border border-[#CBD2C9]"
-                  aria-hidden="true" />
-                
-                  <input
-                  ref={titleRef}
-                  autoFocus
-                  value={draft.title}
-                  onChange={(e) => updateDraft({ title: e.target.value })}
-                  placeholder="Новое дело"
-                  aria-label="Название"
-                  enterKeyHint="done"
-                  className="min-w-0 flex-1 bg-transparent text-[17px] text-ink placeholder:text-muted/80 focus:outline-none" />
-                
-                  <button
-                  type="button"
-                  onClick={onExpand}
-                  aria-label="Подробно"
-                  className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-150 ease-out hover:bg-canvas hover:text-primary">
-                  
-                    <InfoIcon className="h-[19px] w-[19px]" strokeWidth={1.8} aria-hidden="true" />
-                  </button>
-                </div>
-
-                <input
-                value={draft.description}
-                onChange={(e) => updateDraft({ description: e.target.value })}
-                placeholder="Добавить заметку"
-                aria-label="Заметка"
-                className="mt-1.5 w-full bg-transparent pl-[34px] text-[16px] text-ink-soft placeholder:text-muted/70 focus:outline-none" />
+                <TaskComposer
+                inputRef={titleRef}
+                value={{
+                  title: draft.title,
+                  description: draft.description,
+                  date: draft.date,
+                  time: draft.time,
+                  duration: draft.duration,
+                  sphere: draft.sphere,
+                  urgent: draft.urgent,
+                  repeat: draft.repeat,
+                  reminder: draft.reminder
+                }}
+                onChange={(patch) => updateDraft(patch)}
+                onSubmit={submit}
+                onExpand={onExpand} />
               
-
-                <div className="no-scrollbar -mx-5 mt-4 flex flex-nowrap gap-2 overflow-x-auto px-5">
-                  <Chip
-                  icon={<CalendarIcon className={iconClass} strokeWidth={1.9} aria-hidden="true" />}
-                  label="Дата и время"
-                  value={dateLabel}
-                  active={Boolean(draft.date)}
-                  onClick={() => setSheet('datetime')} />
-                
-                  <Chip
-                  icon={<TimerIcon className={iconClass} strokeWidth={1.9} aria-hidden="true" />}
-                  label="Длительность"
-                  value={draft.duration ? `${draft.duration} мин` : undefined}
-                  active={Boolean(draft.duration)}
-                  onClick={() => setSheet('duration')} />
-                
-                  <Chip
-                  icon={<BellIcon className={iconClass} strokeWidth={1.9} aria-hidden="true" />}
-                  label="Уведомление"
-                  value={draft.reminder ? formatReminder(draft.reminder) : undefined}
-                  active={Boolean(draft.reminder)}
-                  onClick={() => setSheet('reminder')} />
-                
-                  <Chip
-                  icon={<Repeat2Icon className={iconClass} strokeWidth={1.9} aria-hidden="true" />}
-                  label="Повтор"
-                  value={hasRepeat ? formatRepeat(draft.repeat) : undefined}
-                  active={hasRepeat}
-                  onClick={() => setSheet('repeat')} />
-                
-                  <Chip
-                  icon={<SphereIcon id={sphere.id} color={sphere.color} className={iconClass} />}
-                  label="Сфера"
-                  ariaLabel={`Сфера: ${sphere.name}`}
-                  value={sphere.id !== 'other' ? sphere.name : undefined}
-                  active={false}
-                  onClick={() => setSheet('sphere')} />
-                
-                </div>
 
                 <div className="mt-4 flex h-9 items-center justify-between">
                   <AnimatePresence>
@@ -254,23 +147,6 @@ export function QuickAddSheet({ open, onDismiss, onExpand, onCommit }: QuickAddS
         null}
       </AnimatePresence>
 
-      <TaskSheets
-        open={open ? sheet : null}
-        fields={{
-          date: draft.date,
-          time: draft.time,
-          duration: draft.duration,
-          reminder: draft.reminder,
-          repeat: draft.repeat,
-          urgent: draft.urgent,
-          sphere: draft.sphere
-        }}
-        onChange={(patch) => {
-          // при смене сферы раздел сбрасывается
-          if (patch.sphere && patch.sphere !== draft.sphere) updateDraft({ ...patch, sectionId: '' });else
-          updateDraft(patch);
-        }}
-        onClose={() => setSheet(null)} />
       
     </>);
 

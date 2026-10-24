@@ -243,8 +243,15 @@ function WheelColumn({
 
 function TimeWheel({ value, onChange }: {value: string;onChange: (time: string) => void;}) {
   const [h, m] = value.split(':').map(Number);
-  const set = (hours: number, minutes: number) =>
-  onChange(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
+  // последнее значение: часы и минуты могут смениться в одном такте — не затираем друг друга
+  const latest = useRef(value);
+  latest.current = value;
+  const update = (part: 'h' | 'm', n: number) => {
+    const [hh, mm] = latest.current.split(':').map(Number);
+    const next = `${String(part === 'h' ? n : hh).padStart(2, '0')}:${String(part === 'm' ? n : mm).padStart(2, '0')}`;
+    latest.current = next;
+    onChange(next);
+  };
   return (
     <div className="relative mx-auto flex w-fit items-center gap-2 py-2">
       {/* центральная выделенная полоса */}
@@ -253,11 +260,11 @@ function TimeWheel({ value, onChange }: {value: string;onChange: (time: string) 
         aria-hidden="true" />
 
       <div className="relative">
-        <WheelColumn count={24} value={h} onChange={(v) => set(v, m)} label="Часы" />
+        <WheelColumn count={24} value={h} onChange={(v) => update('h', v)} label="Часы" />
       </div>
       <span className="relative text-[22px] font-semibold text-ink">:</span>
       <div className="relative">
-        <WheelColumn count={60} value={m} onChange={(v) => set(h, v)} label="Минуты" />
+        <WheelColumn count={60} value={m} onChange={(v) => update('m', v)} label="Минуты" />
       </div>
     </div>);
 

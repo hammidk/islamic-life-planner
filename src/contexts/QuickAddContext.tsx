@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useApp } from './AppContext';
 import { emptyDraft, useTaskDraft } from './TaskDraftContext';
 import type { TaskDraft } from './TaskDraftContext';
@@ -6,11 +6,23 @@ import { QuickAddSheet } from '../components/task/QuickAddSheet';
 import { FullTaskScreen } from '../components/task/FullTaskScreen';
 import { useSheetBackGuard } from '../hooks/useSheetBackGuard';
 
-export type QuickAddMode = 'closed' | 'quick' | 'full';
+/** quick — окно снизу (Главная, Дневник); inline — карточка вверху списка; full — «Подробно» */
+export type QuickAddMode = 'closed' | 'quick' | 'inline' | 'full';
 
 interface QuickAddState {
   mode: QuickAddMode;
   openQuickAdd: (preset?: Partial<TaskDraft>) => void;
+  /** экран со списком дел: «+» создаёт карточку вверху списка с этим контекстом */
+  registerInlineHost: (preset: Partial<TaskDraft>) => () => void;
+  /** создать дело из карточки и открыть новую пустую с тем же контекстом; false — пустое название */
+  commitInline: () => boolean;
+  closeInline: () => void;
+  /** «Подробно» для создаваемого дела */
+  expandDraft: () => void;
+  /** дело, открытое для редактирования на своём месте */
+  editingId: string | null;
+  startEdit: (id: string) => void;
+  stopEdit: () => void;
 }
 
 const QuickAddContext = createContext<QuickAddState | null>(null);
@@ -22,14 +34,21 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
   const [mode, setMode] = useState<QuickAddMode>('closed');
   const presetRef = useRef<Partial<TaskDraft>>({});
   const baselineRef = useRef<string>(JSON.stringify(emptyDraft()));
+  const hostRef = useRef<Partial<TaskDraft> | null>(null);
+  /** скрытое поле: фокус в нём в момент тапа по «+» открывает клавиатуру на iPhone, дальше фокус переходит в карточку */
+  const keyboardProxyRef = useRef<HTMLInputElement>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const openQuickAdd = useCallback(
     (preset?: Partial<TaskDraft>) => {
-      presetRef.current = preset ?? {};
+      const host = hostRef.current;
+      presetRef.current = host ? { ...host, ...preset } : preset ?? {};
       const fresh = { ...emptyDraft(), ...presetRef.current };
       baselineRef.current = JSON.stringify(fresh);
+      keyboardProxyRef.current?.focus({ preventScroll: true });
+      setEditingId(null);
       resetDraft(presetRef.current);
-      setMode('quick');
+      setMode(host ? 'inline' : 'quick');
     },
     [resetDraft]
   );
@@ -38,6 +57,32 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
     setMode('closed');
     resetDraft();
   }, [resetDraft]);
+
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+
+  const registerInlineHost = useCallback(
+    (preset: Partial<TaskDraft>) => {
+      hostRef.current = preset;
+      return () => {
+        if (hostRef.current === preset) hostRef.current = null;
+        // ушли с экрана — карточка вверху списка закрывается
+        if (modeRef.current === 'inline') close();
+      };
+    },
+    [close]
+  );
+
+  const startEdit = useCallback(
+    (id: string) => {
+      if (modeRef.current === 'inline') close();
+      setEditingId(id);
+    },
+    [close]
+  );
+  const stopEdit = useCallback(() => setEditingId(null), []);
+  // жест «назад» закрывает редактирование (изменения сохраняются)
+  useSheetBackGuard(editingId !== null, stopEdit);
 
   /** создаёт задачу из черновика; false — пустое название */
   const commit = useCallback((): boolean => {
@@ -63,11 +108,11 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
     return true;
   }, [draft, addTask, addChecklistItem]);
 
-  /** быстрый лист: после добавления остаётся открытым для следующей задачи */
+  /** быстрый лист и карточка вверху списка: после добавления — новая пустая с тем же контекстом */
   const commitAndContinue = useCallback((): boolean => {
     if (!commit()) return false;
     const next: Partial<TaskDraft> = {
-      ...(presetRef.current.date ? { date: presetRef.current.date } : {}),
+      ...presetRef.current,
       sphere: draft.sphere,
       sectionId: draft.sectionId
     };
@@ -125,8 +170,25 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
   }, [close]);
 
   return (
-    <QuickAddContext.Provider value={{ mode, openQuickAdd }}>
+    <QuickAddContext.Provider
+      value={{
+        mode,
+        openQuickAdd,
+        registerInlineHost,
+        commitInline: commitAndContinue,
+        closeInline: close,
+        expandDraft: () => setMode('full'),
+        editingId,
+        startEdit,
+        stopEdit
+      }}>
+      
       {children}
+      <input
+        ref={keyboardProxyRef}
+        aria-hidden="true"
+        tabIndex={-1}
+        className="pointer-events-none fixed left-0 top-0 h-px w-px text-[16px] opacity-0" />
       <QuickAddSheet
         open={mode === 'quick'}
         onDismiss={close}
@@ -143,6 +205,16 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
       
     </QuickAddContext.Provider>);
 
+}
+
+/** Экран со списком дел: «+» создаёт дело карточкой вверху этого списка с данным контекстом */
+export function useInlineCreateHost(preset: Partial<TaskDraft>): void {
+  const { registerInlineHost } = useQuickAdd();
+  const key = JSON.stringify(preset);
+  useEffect(
+    () => registerInlineHost(JSON.parse(key) as Partial<TaskDraft>),
+    [registerInlineHost, key]
+  );
 }
 
 export function useQuickAdd(): QuickAddState {
