@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckIcon } from 'lucide-react';
+import { SphereIcon } from './SphereIcon';
 import { useApp } from '../contexts/AppContext';
 import { spheres } from '../data/appData';
 import { formatRowMeta, formatTimePrefix } from '../utils/taskOptions';
@@ -19,6 +20,8 @@ interface TaskRowProps {
   sphereColor?: boolean;
   /** длительность в мета-строке, а не справа (тесные строки) */
   durationInMeta?: boolean;
+  /** «Вт 10:00» перед названием — только в списках сфер и разделов */
+  showPrefix?: boolean;
 }
 
 export function TaskRow({
@@ -29,13 +32,15 @@ export function TaskRow({
   onToggle,
   showDate = true,
   sphereColor = false,
-  durationInMeta = false
+  durationInMeta = false,
+  showPrefix = false
 }: TaskRowProps) {
   const { toggleTask } = useApp();
   const done = checked ?? task.status === 'done';
   const inactive = task.status === 'cancelled';
   const note = task.description?.split('\n').find((line) => line.trim())?.trim();
-  const prefix = formatTimePrefix(task);
+  const prefix = showPrefix ? formatTimePrefix(task) : null;
+  const ownSphere = spheres.find((s) => s.id === task.sphere) ?? spheres[spheres.length - 1];
   const meta = formatRowMeta(task, { showDate, withSphere: !sphereColor, withDuration: durationInMeta });
   const sphere = sphereColor ? spheres.find((s) => s.id === task.sphere) ?? spheres[spheres.length - 1] : null;
 
@@ -64,8 +69,12 @@ export function TaskRow({
           done || inactive ? 'text-muted line-through' : 'text-ink'}`
           }>
           
-          {/* префикс в том же текстовом элементе и тем же шрифтом — обрезается троеточием вместе с названием */}
+          {/* [день и время] [иконка сферы] [название] в одном текстовом элементе — обрезаются троеточием вместе */}
           {prefix ? `${prefix} ` : ''}
+          <SphereIcon
+            id={ownSphere.id}
+            color={ownSphere.color}
+            className="mr-1 inline-block h-[14px] w-[14px] align-[-2px]" />
           {task.title}
         </p>
         {note ? <p className="mt-0.5 truncate text-[12.5px] text-muted">{note}</p> : null}

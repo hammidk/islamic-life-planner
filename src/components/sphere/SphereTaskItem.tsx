@@ -59,6 +59,7 @@ export function SphereTaskItem({ task, subtasks, onMove, onMenu, controls }: Sph
         <TaskRow
           task={task}
           durationInMeta
+          showPrefix
           onOpen={open}
           right={
           <span className="flex shrink-0 items-center">
@@ -95,6 +96,7 @@ export function SphereTaskItem({ task, subtasks, onMove, onMenu, controls }: Sph
                 <TaskRow
               task={sub}
               durationInMeta
+              showPrefix
               onOpen={open}
               right={
               <span className="flex shrink-0 items-center">
