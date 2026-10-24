@@ -89,6 +89,11 @@ export function TaskRow({
         </p>
       </button>
 
+      {task.urgent ?
+      <span className="shrink-0 text-[16px] font-bold leading-none text-[#D93B30]" role="img" aria-label="Срочное">
+          !
+        </span> :
+      null}
       {task.duration && !durationInMeta ?
       <span className="shrink-0 text-[11.5px] tabular-nums text-muted">{task.duration} мин</span> :
       null}

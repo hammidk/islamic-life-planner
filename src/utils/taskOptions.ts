@@ -33,6 +33,48 @@ export function quickDates(): {id: string;label: string;date: string;hint: strin
 
 }
 
+const monthShortRu = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+
+/** «Сб, 31 окт» */
+export function formatShortDate(date: string): string {
+  const d = safeParseISO(date);
+  if (!d) return '';
+  return `${weekdayShort[(d.getDay() + 6) % 7]}, ${d.getDate()} ${monthShortRu[d.getMonth()]}`;
+}
+
+/** «Суббота, 31 октября 2026 г.» */
+export function formatFullDate(date: string): string {
+  const d = safeParseISO(date);
+  if (!d) return '';
+  const text = format(d, "EEEE, d MMMM yyyy 'г.'", { locale: ru });
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** Строка даты над названием: «Сегодня», «Завтра, 10:00», «Сб, 31 окт, 10:00» */
+export function formatDateLine(date: string, time?: string): string {
+  const d = safeParseISO(date);
+  if (!d) return '';
+  const today = safeParseISO(todayISO());
+  const day =
+  today && isSameDay(d, today) ?
+  'Сегодня' :
+  today && isSameDay(d, addDays(today, 1)) ?
+  'Завтра' :
+  formatShortDate(date);
+  return time ? `${day}, ${time}` : day;
+}
+
+/** Меню даты в карточке создания: ближайшие выходные и понедельник — строго после сегодня */
+export function dateMenuOptions(): {id: string;label: string;date: string;}[] {
+  const today = safeParseISO(todayISO()) ?? new Date();
+  return [
+  { id: 'today', label: 'Сегодня', date: iso(today) },
+  { id: 'tomorrow', label: 'Завтра', date: iso(addDays(today, 1)) },
+  { id: 'weekend', label: 'На следующих выходных', date: iso(nextSaturday(today)) },
+  { id: 'nextWeek', label: 'На следующей неделе', date: iso(nextMonday(today)) }];
+
+}
+
 /** Безопасный разбор ISO-даты: null для пустой или невалидной строки */
 export function safeParseISO(date?: string | null): Date | null {
   if (!date) return null;
@@ -106,6 +148,7 @@ export const relativeReminders = [
 
 export function formatReminder(reminder?: Reminder): string {
   if (!reminder) return 'Без напоминания';
+  if (reminder.kind === 'relative' && reminder.minutes === 0) return 'В момент события';
   if (reminder.kind === 'absolute') {
     const preset = absoluteReminders.find((r) => r.time === reminder.time);
     return preset ? `${preset.time} · ${preset.label}` : reminder.time;

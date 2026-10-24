@@ -55,6 +55,7 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
       reminder: draft.reminder,
       notify: Boolean(draft.reminder),
       repeat: draft.repeat,
+      urgent: draft.urgent || undefined,
       intention: draft.intention.trim() || undefined,
       result: draft.result.trim() || undefined
     });

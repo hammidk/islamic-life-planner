@@ -1,10 +1,9 @@
 import React from 'react';
-import { DateTimeSheet } from './DateTimeSheet';
+import { DateTimeScreen } from './DateTimeScreen';
 import { DurationSheet } from './DurationSheet';
 import { ReminderSheet } from './ReminderSheet';
 import { RepeatSheet } from './RepeatSheet';
 import { SphereSheet } from './SphereSheet';
-import { reminderAfterTimeChange } from '../../utils/taskOptions';
 import type { Reminder, RepeatRule, SphereId } from '../../types';
 
 export interface ScheduleFields {
@@ -17,6 +16,7 @@ export interface ScheduleFields {
   reminder?: Reminder;
   repeat?: RepeatRule;
   sphere: SphereId;
+  urgent?: boolean;
 }
 
 export type SchedulePatch = Partial<{
@@ -26,6 +26,7 @@ export type SchedulePatch = Partial<{
   reminder: Reminder | undefined;
   repeat: RepeatRule;
   sphere: SphereId;
+  urgent: boolean;
 }>;
 
 export type SheetKind = 'datetime' | 'duration' | 'reminder' | 'repeat' | 'sphere' | null;
@@ -41,18 +42,25 @@ interface TaskSheetsProps {
 export function TaskSheets({ open, fields, onChange, onClose }: TaskSheetsProps) {
   return (
     <>
-      <DateTimeSheet
+      <DateTimeScreen
         open={open === 'datetime'}
-        date={fields.date}
-        time={fields.time}
-        onChangeDate={(date) => onChange({ date })}
-        onChangeTime={(time, date) =>
-        onChange({
-          time,
-          date,
-          reminder: reminderAfterTimeChange(fields.reminder, time || undefined)
-        })
-        }
+        value={{
+          date: fields.date,
+          time: fields.time,
+          urgent: Boolean(fields.urgent),
+          repeat: fields.repeat,
+          reminder: fields.reminder
+        }}
+        onApply={(v) => {
+          onChange({
+            date: v.date,
+            time: v.time,
+            urgent: v.urgent,
+            reminder: v.reminder,
+            repeat: v.repeat ?? { kind: 'none' }
+          });
+          onClose();
+        }}
         onClose={onClose} />
       
       <DurationSheet

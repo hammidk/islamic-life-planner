@@ -78,6 +78,7 @@ export function TaskDetail() {
           duration: task.duration ? String(task.duration) : '',
           reminder: task.reminder,
           repeat: task.repeat,
+          urgent: task.urgent,
           sphere: task.sphere,
           sectionId: task.sectionId ?? '',
           intention: task.intention ?? '',
@@ -98,6 +99,7 @@ export function TaskDetail() {
             next.notify = Boolean(patch.reminder);
           }
           if (patch.repeat) next.repeat = patch.repeat;
+          if ('urgent' in patch) next.urgent = patch.urgent || undefined;
           if (patch.sphere) next.sphere = patch.sphere;
           if ('sectionId' in patch) next.sectionId = patch.sectionId || undefined;
           if ('intention' in patch) next.intention = patch.intention || undefined;

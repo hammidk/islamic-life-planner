@@ -86,6 +86,7 @@ export function FullTaskScreen({
                 duration: draft.duration,
                 reminder: draft.reminder,
                 repeat: draft.repeat,
+                urgent: draft.urgent,
                 sphere: draft.sphere,
                 sectionId: draft.sectionId,
                 intention: draft.intention,

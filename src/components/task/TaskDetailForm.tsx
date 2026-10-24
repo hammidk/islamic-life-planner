@@ -30,6 +30,7 @@ export interface DetailFields {
   reminder?: Reminder;
   repeat?: RepeatRule;
   sphere: SphereId;
+  urgent?: boolean;
   /** '' — без раздела */
   sectionId: string;
   intention: string;

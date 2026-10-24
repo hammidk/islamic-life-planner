@@ -262,6 +262,7 @@ export function QuickAddSheet({ open, onDismiss, onExpand, onCommit }: QuickAddS
           duration: draft.duration,
           reminder: draft.reminder,
           repeat: draft.repeat,
+          urgent: draft.urgent,
           sphere: draft.sphere
         }}
         onChange={(patch) => {

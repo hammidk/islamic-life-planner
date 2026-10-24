@@ -15,6 +15,7 @@ export interface TaskDraft {
   sectionId: string;
   reminder?: Reminder;
   repeat?: RepeatRule;
+  urgent?: boolean;
   intention: string;
   result: string;
   checklist: string[];
