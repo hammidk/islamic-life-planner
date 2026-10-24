@@ -8,6 +8,7 @@ import { Home } from './pages/Home';
 import { WeekTasks } from './pages/WeekTasks';
 import { History } from './pages/History';
 import { SphereDetail } from './pages/SphereDetail';
+import { SectionDetail } from './pages/SectionDetail';
 import { DayTasks } from './pages/DayTasks';
 import { TaskStats } from './pages/TaskStats';
 import { TaskDetail } from './pages/TaskDetail';
@@ -36,6 +37,7 @@ export function App() {
                   <Route path="/week" element={<WeekTasks />} />
                   <Route path="/history" element={<History />} />
                   <Route path="/sphere/:id" element={<SphereDetail />} />
+                  <Route path="/sphere/:id/section/:sectionId" element={<SectionDetail />} />
                   <Route path="/tasks/stats" element={<TaskStats />} />
                   <Route path="/task/:id" element={<TaskDetail />} />
                   <Route path="/journal" element={<Journal />} />

@@ -1,27 +1,62 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CheckIcon, ChevronDownIcon, ChevronRightIcon, PlusIcon } from 'lucide-react';
+import { CheckIcon, ChevronDownIcon, PlusIcon } from 'lucide-react';
 import { Shell, SubHeader } from '../components/Shell';
 import { DayTaskList } from '../components/DayTaskList';
 import { PrayerRow } from '../components/PrayerRow';
 import { PrayerTimesError } from '../components/PrayerTimesError';
-import { SphereIcon } from '../components/SphereIcon';
 import { useApp } from '../contexts/AppContext';
 import { useLive } from '../contexts/LiveDataContext';
 import { useQuickAdd } from '../contexts/QuickAddContext';
-import { spheres } from '../data/appData';
 import { formatDateLabel } from '../utils/calendar';
 import { formatDuration, fromMinutes, getPrayerState, taskAxisMinutes } from '../utils/prayer';
 import { buildTodayPlan } from '../utils/todayPlan';
-import type { PlanItem } from '../utils/todayPlan';
+import type { PlanItem, PlanWindow } from '../utils/todayPlan';
+import { readPref, writePref } from '../utils/localPrefs';
+import { TodaySphereList } from '../components/today/TodaySphereList';
+import { useSheetBackGuard } from '../hooks/useSheetBackGuard';
 import { compareOrder } from '../utils/taskOptions';
 import type { Task } from '../types';
 
 const byTime = (a: Task, b: Task) =>
 taskAxisMinutes(a.time as string) - taskAxisMinutes(b.time as string) || compareOrder(a, b);
 
-/** фон «Удела» в расписании: цвет сферы (#6E6AA6) с прозрачностью 12% поверх canvas, непрозрачный */
-const RIZQ_SLOT_SURFACE = 'bg-[#E5E5EB]';
+type MovableSphere = 'rizq' | 'other';
+type BlockPositions = Partial<Record<MovableSphere, string>>;
+
+/** положение «Удела» и «Прочего» по окнам — только на этот день, завтра снова по умолчанию */
+const blocksKey = (date: string) => `ilp.today.blocks.${date}`;
+
+function saveBlockPositions(date: string, value: BlockPositions): void {
+  writePref(blocksKey(date), value);
+  try {
+    // ключи прошлых дней больше не нужны
+    Object.keys(localStorage).
+    filter((k) => k.startsWith('ilp.today.blocks.') && k !== blocksKey(date)).
+    forEach((k) => localStorage.removeItem(k));
+  } catch {
+
+    /* без хранилища — не страшно */}
+}
+
+/** Переносит списки (без слота) в выбранные окна: сразу под намазом, как по умолчанию */
+function applyBlockPositions(plan: PlanWindow[], positions: BlockPositions): PlanWindow[] {
+  const windows = plan.map((w) => ({ ...w, items: [...w.items] }));
+  (['rizq', 'other'] as MovableSphere[]).forEach((sphere) => {
+    const target = windows.find((w) => w.id === positions[sphere]);
+    if (!target) return;
+    const isMovable = (item: PlanItem) => item.kind === 'list' && item.sphere === sphere && !item.slot;
+    const from = windows.find((w) => w.items.some(isMovable));
+    if (!from || from === target) return;
+    const item = from.items.find(isMovable) as PlanItem;
+    from.items = from.items.filter((i) => i !== item);
+    const head = target.items.findIndex(
+      (i) => !(i.kind === 'prayer' || i.kind === 'dayEnd' || i.kind === 'list' && !i.slot)
+    );
+    target.items.splice(head === -1 ? target.items.length : head, 0, item);
+  });
+  return windows;
+}
 
 /**
  * /today — «Сегодня» с намазами и окнами (только с карточки «Сегодня» на Главной);
@@ -67,45 +102,6 @@ function EmptyDay({ onAdd }: {onAdd: () => void;}) {
         <PlusIcon className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         Добавить дело
       </button>
-    </div>);
-
-}
-
-/** Список сферы «Удел» или «Прочее» на «Сегодня»: открытые дела без времени на сегодня или без даты */
-function SphereList({
-  sphereId,
-  tasks,
-  slot
-
-}: {sphereId: 'rizq' | 'other';tasks: Task[];slot?: {start: number;end: number;};}) {
-  const navigate = useNavigate();
-  const sphere = spheres.find((s) => s.id === sphereId) ?? spheres[spheres.length - 1];
-  const surface = slot ? RIZQ_SLOT_SURFACE : 'bg-canvas';
-
-  return (
-    <div className={slot ? `-mx-5 px-5 ${RIZQ_SLOT_SURFACE}` : ''}>
-      <button
-        type="button"
-        onClick={() => navigate(`/sphere/${sphere.id}`)}
-        className="flex w-full items-center gap-2.5 py-2.5 text-left">
-        
-        <SphereIcon id={sphere.id} color={sphere.color} className="h-[16px] w-[16px]" />
-        <span className={`min-w-0 flex-1 truncate text-[14px] font-medium ${slot ? 'text-ink' : 'text-muted'}`}>
-          {sphere.name}
-          {tasks.length > 0 ? <span className="tabular-nums font-normal text-muted"> · {tasks.length}</span> : null}
-          {slot ?
-          <span className="tabular-nums font-normal text-muted">
-              {' '}· {fromMinutes(slot.start)}–{fromMinutes(slot.end)}
-            </span> :
-          null}
-        </span>
-        <ChevronRightIcon className="h-4 w-4 shrink-0 text-muted" strokeWidth={1.8} aria-hidden="true" />
-      </button>
-      {tasks.length > 0 ?
-      <div className="pl-[26px]">
-          <DayTaskList tasks={tasks} divider="divide-line" surface={surface} showDate={false} hideDone />
-        </div> :
-      null}
     </div>);
 
 }
@@ -191,7 +187,33 @@ function TodayView({ date }: {date: string;}) {
   ).
   sort(compareOrder);
 
-  const plan = buildTodayPlan({
+  const [positions, setPositions] = React.useState<BlockPositions>(() => readPref(blocksKey(date), {}));
+  const [moving, setMoving] = React.useState<MovableSphere | null>(null);
+  React.useEffect(() => {
+    setPositions(readPref(blocksKey(date), {}));
+  }, [date]);
+  // режим переноса закрывается жестом «назад», как окно
+  useSheetBackGuard(moving !== null, () => setMoving(null));
+
+  const moveTo = (sphere: MovableSphere, windowId: string) => {
+    const next = { ...positions, [sphere]: windowId };
+    setPositions(next);
+    saveBlockPositions(date, next);
+    setMoving(null);
+  };
+
+  /** отпускание после перетаскивания: окно, над зоной которого палец */
+  const dropAt = (sphere: MovableSphere, point: {x: number;y: number;}) => {
+    const zones = Array.from(document.querySelectorAll<HTMLElement>('[data-drop-window]'));
+    const zone = zones.find((el) => {
+      const r = el.getBoundingClientRect();
+      return point.y >= r.top + window.scrollY - 16 && point.y <= r.bottom + window.scrollY + 16;
+    });
+    if (zone?.dataset.dropWindow) moveTo(sphere, zone.dataset.dropWindow);else
+    setMoving(null);
+  };
+
+  const rawPlan = buildTodayPlan({
     prayers,
     sunrise,
     tahajjud,
@@ -201,11 +223,26 @@ function TodayView({ date }: {date: string;}) {
     prayersDone,
     rizqSlot: sphereSlots.rizq
   });
+  const plan = rawPlan ? applyBlockPositions(rawPlan, positions) : null;
   const prayersReady = (status === 'ready' || status === 'stale') && plan !== null;
 
   /** подряд идущие дела — один список (перетаскивание, свайп, меню) */
-  const renderItems = (windowId: string, items: PlanItem[], prayer: React.ReactNode) => {
+  const renderItems = (planWindow: PlanWindow, prayer: React.ReactNode) => {
+    const { id: windowId, items } = planWindow;
     const out: React.ReactNode[] = [];
+    /** зона вставки — под намазом окна (или в начале окна, если намаз отмечен) */
+    const zone = moving ?
+    <button
+      key="drop-zone"
+      type="button"
+      data-drop-window={windowId}
+      onClick={() => moveTo(moving, windowId)}
+      className="my-1.5 flex w-full items-center justify-center rounded-xl border border-dashed border-primary/50 bg-primary-tint/70 py-2.5 text-[13px] font-medium text-primary">
+      
+        Перенести сюда · {planWindow.name}
+      </button> :
+    null;
+    if (zone && !items.some((i) => i.kind === 'prayer')) out.push(zone);
     let run: Task[] = [];
     const flush = () => {
       if (run.length === 0) return;
@@ -228,15 +265,23 @@ function TodayView({ date }: {date: string;}) {
         return;
       }
       flush();
-      if (item.kind === 'prayer') out.push(<React.Fragment key="prayer">{prayer}</React.Fragment>);else
+      if (item.kind === 'prayer') {
+        out.push(<React.Fragment key="prayer">{prayer}</React.Fragment>);
+        if (zone) out.push(zone);
+      } else
       if (item.kind === 'dayEnd') out.push(<DayEndRow key="day-end" entryId={todayEntry?.id} />);else
       if (item.kind === 'list') {
+        const sphere = item.sphere;
         out.push(
-          <SphereList
-            key={`list-${item.sphere}`}
-            sphereId={item.sphere}
-            tasks={listTasks(item.sphere)}
-            slot={item.slot} />
+          <TodaySphereList
+            key={`list-${sphere}`}
+            sphereId={sphere}
+            tasks={listTasks(sphere)}
+            slot={item.slot}
+            moving={moving === sphere}
+            onToggleMove={() => setMoving((m) => m === sphere ? null : sphere)}
+            onDragStart={() => setMoving(sphere)}
+            onDrop={(point) => dropAt(sphere, point)} />
 
         );
       } else {
@@ -292,8 +337,7 @@ function TodayView({ date }: {date: string;}) {
           {plan.map((w) =>
         <div key={w.id}>
               {renderItems(
-            w.id,
-            w.items,
+            w,
             <PrayerRow
               id={w.id}
               name={w.name}

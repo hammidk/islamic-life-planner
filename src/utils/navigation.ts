@@ -8,6 +8,8 @@ export function parentPath(pathname: string): string {
   if (pathname === '/today' || pathname.startsWith('/today/') || pathname.startsWith('/day/')) {
     return '/week';
   }
+  const section = pathname.match(/^(\/sphere\/[^/]+)\/section\//);
+  if (section) return section[1];
   if (pathname.startsWith('/sphere/') || pathname.startsWith('/task/')) return '/';
   return '/';
 }
