@@ -297,7 +297,7 @@ function SwitchRow({
       {icon}
       <span className="min-w-0 flex-1">
         <span className="block text-[17px] leading-snug text-ink">{title}</span>
-        {subtitle ? <span className="block truncate text-[15px] leading-snug text-primary">{subtitle}</span> : null}
+        {subtitle ? <span className="block text-[15px] leading-snug text-primary">{subtitle}</span> : null}
       </span>
       <IosSwitch checked={checked} onChange={onChange} label={title} />
     </div>);
@@ -495,7 +495,7 @@ export function DateTimeScreen({ open, value, onApply, onClose }: DateTimeScreen
 
                       <span className="block text-[17px] leading-snug text-ink">Дата</span>
                       {draft.date ?
-                    <span className="block truncate text-[15px] leading-snug text-primary">
+                    <span className="block text-[15px] leading-snug text-primary">
                           {formatFullDate(draft.date)}
                         </span> :
                     null}
