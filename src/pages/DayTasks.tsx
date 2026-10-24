@@ -25,14 +25,15 @@ const sectionTitle = 'px-1 pb-1 pt-6 text-[12px] font-medium uppercase tracking-
 /** фон «Удела» в расписании: цвет сферы (#6E6AA6) с прозрачностью 12% поверх canvas, непрозрачный */
 const RIZQ_SLOT_SURFACE = 'bg-[#E5E5EB]';
 
-/** Один экран дня для /today и /day/:date — плоский список «как Напоминания» */
+/**
+ * /today — «Сегодня» с намазами и окнами (только с карточки «Сегодня» на Главной);
+ * /day/:date — простой список дел дня из календаря, в том числе для сегодняшней даты.
+ */
 export function DayTasks() {
   const { todayISO } = useLive();
   const { date: param } = useParams();
-  const date = param ?? todayISO;
-  const isToday = date === todayISO;
 
-  return isToday ? <TodayView date={date} /> : <OtherDayView date={date} />;
+  return param ? <OtherDayView date={param} /> : <TodayView date={todayISO} />;
 }
 
 function OtherDayView({ date }: {date: string;}) {
