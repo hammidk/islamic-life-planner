@@ -1,10 +1,13 @@
 import React, { useRef, useState } from 'react';
-import { CalendarIcon, InfoIcon, TimerIcon } from 'lucide-react';
+import { CalendarIcon, InfoIcon, Repeat2Icon, TimerIcon } from 'lucide-react';
 import { SphereIcon } from '../SphereIcon';
 import { PopoverMenu } from '../ui/PopoverMenu';
 import { DateTimeScreen } from './DateTimeScreen';
 import { DurationSheet } from './DurationSheet';
 import { SphereSheet } from './SphereSheet';
+import { RepeatSheet } from './RepeatSheet';
+import { repeatLabel, repeatMenuItems, repeatRuleForKey } from './repeatMenu';
+import { todayISO } from '../../utils/prayer';
 import { spheres } from '../../data/appData';
 import { dateMenuOptions, formatDateLine, formatShortDate, reminderAfterTimeChange } from '../../utils/taskOptions';
 import type { Reminder, RepeatRule, SphereId } from '../../types';
@@ -76,7 +79,7 @@ function Chip({
 
 }
 
-type SheetKind = 'datetime' | 'duration' | 'sphere' | null;
+type SheetKind = 'datetime' | 'duration' | 'sphere' | 'repeat' | null;
 
 /**
  * Минималистичная карточка дела как в «Напоминаниях»: строка даты сверху (если выбрана),
@@ -94,7 +97,9 @@ export function TaskComposer({
 }: TaskComposerProps) {
   const [sheet, setSheet] = useState<SheetKind>(null);
   const [dateMenu, setDateMenu] = useState(false);
+  const [repeatMenu, setRepeatMenu] = useState(false);
   const dateChipRef = useRef<HTMLButtonElement>(null);
+  const repeatChipRef = useRef<HTMLButtonElement>(null);
   const sphere = spheres.find((s) => s.id === value.sphere) ?? spheres[spheres.length - 1];
   const iconClass = 'h-4 w-4';
 
@@ -118,6 +123,19 @@ export function TaskComposer({
     }
     const option = options.find((o) => o.id === key);
     if (option) onChange({ date: option.date });
+  };
+
+  const hasRepeat = Boolean(value.repeat && value.repeat.kind !== 'none');
+
+  /** повтору нужна опорная дата: без даты ставится сегодня */
+  const applyRepeat = (rule: RepeatRule) =>
+  onChange(rule.kind !== 'none' && !value.date ? { repeat: rule, date: todayISO() } : { repeat: rule });
+
+  const selectRepeat = (key: string) => {
+    setRepeatMenu(false);
+    const rule = repeatRuleForKey(key);
+    if (rule) applyRepeat(rule);else
+    setSheet('repeat');
   };
 
   const dateLine = value.date ? formatDateLine(value.date, value.time || undefined) : '';
@@ -190,6 +208,14 @@ export function TaskComposer({
           onClick={() => setDateMenu(true)} />
 
         <Chip
+          chipRef={repeatChipRef}
+          icon={<Repeat2Icon className={iconClass} strokeWidth={1.9} aria-hidden="true" />}
+          label="Повтор"
+          value={hasRepeat ? repeatLabel(value.repeat) : undefined}
+          active={hasRepeat}
+          onClick={() => setRepeatMenu(true)} />
+
+        <Chip
           icon={<TimerIcon className={iconClass} strokeWidth={1.9} aria-hidden="true" />}
           label="Длительность"
           value={value.duration ? `${value.duration} мин` : undefined}
@@ -213,6 +239,20 @@ export function TaskComposer({
         onSelect={selectDate}
         onClose={() => setDateMenu(false)}
         label="Дата" />
+
+      <PopoverMenu
+        open={repeatMenu}
+        anchor={repeatChipRef.current}
+        items={repeatMenuItems(value.repeat)}
+        onSelect={selectRepeat}
+        onClose={() => setRepeatMenu(false)}
+        label="Повтор" />
+
+      <RepeatSheet
+        open={sheet === 'repeat'}
+        value={value.repeat}
+        onSelect={applyRepeat}
+        onClose={() => setSheet(null)} />
 
       <DateTimeScreen
         open={sheet === 'datetime'}

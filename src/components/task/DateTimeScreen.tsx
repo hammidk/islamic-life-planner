@@ -19,12 +19,12 @@ import { IosSwitch } from '../ui/IosSwitch';
 import { PopoverMenu } from '../ui/PopoverMenu';
 import type { PopoverItem } from '../ui/PopoverMenu';
 import { RepeatSheet } from './RepeatSheet';
+import { repeatLabel, repeatMenuItems, repeatRuleForKey } from './repeatMenu';
 import { useSheetBackGuard } from '../../hooks/useSheetBackGuard';
 import { todayISO } from '../../utils/prayer';
 import {
   absoluteReminders,
   formatFullDate,
-  formatRepeat,
   reminderAfterTimeChange,
   safeParseISO,
   weekdayShort } from
@@ -365,20 +365,8 @@ export function DateTimeScreen({ open, value, onApply, onClose }: DateTimeScreen
     setTime('');
   };
 
-  const repeat = draft.repeat ?? { kind: 'none' as const };
-  const repeatItems: PopoverItem[] = [
-  { key: 'none', label: 'Никогда', selected: repeat.kind === 'none' },
-  { key: 'daily', label: 'Каждый день', selected: repeat.kind === 'daily' },
-  { key: 'weeks1', label: 'Каждую неделю', selected: repeat.kind === 'weeks' && repeat.every === 1 },
-  { key: 'weeks2', label: 'Каждые 2 недели', selected: repeat.kind === 'weeks' && repeat.every === 2 },
-  { key: 'monthly', label: 'Каждый месяц', selected: repeat.kind === 'monthly' },
-  {
-    key: 'custom',
-    label: 'Настроить…',
-    selected: repeat.kind === 'weekdays' || repeat.kind === 'weeks' && repeat.every > 2
-  }];
-
-  const repeatLabel = repeat.kind === 'none' ? 'Никогда' : formatRepeat(repeat);
+  const repeatItems = repeatMenuItems(draft.repeat);
+  const repeatText = repeatLabel(draft.repeat);
 
   const relativeOptions = [
   { key: 'r0', label: 'В момент события', minutes: 0 },
@@ -412,21 +400,9 @@ export function DateTimeScreen({ open, value, onApply, onClose }: DateTimeScreen
 
   const selectRepeat = (key: string) => {
     setMenu(null);
-    if (key === 'custom') {
-      setRepeatSheet(true);
-      return;
-    }
-    const rule: RepeatRule =
-    key === 'daily' ?
-    { kind: 'daily' } :
-    key === 'weeks1' ?
-    { kind: 'weeks', every: 1 } :
-    key === 'weeks2' ?
-    { kind: 'weeks', every: 2 } :
-    key === 'monthly' ?
-    { kind: 'monthly' } :
-    { kind: 'none' };
-    patch({ repeat: rule });
+    const rule = repeatRuleForKey(key);
+    if (rule) patch({ repeat: rule });else
+    setRepeatSheet(true);
   };
 
   const selectReminder = (key: string) => {
@@ -536,7 +512,7 @@ export function DateTimeScreen({ open, value, onApply, onClose }: DateTimeScreen
                   <button ref={repeatRef} type="button" onClick={() => setMenu('repeat')} className={menuRow}>
                     <Repeat2Icon className={rowIcon} strokeWidth={1.8} aria-hidden="true" />
                     <span className="flex-1 text-[17px] text-ink">Повтор</span>
-                    <span className="min-w-0 truncate text-[17px] text-muted">{repeatLabel}</span>
+                    <span className="min-w-0 truncate text-[17px] text-muted">{repeatText}</span>
                     <ChevronsUpDownIcon className="h-4 w-4 shrink-0 text-muted" strokeWidth={2} aria-hidden="true" />
                   </button>
                   <Divider />

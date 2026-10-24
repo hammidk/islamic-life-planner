@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { CheckIcon } from 'lucide-react';
 import { useSheetBackGuard } from '../../hooks/useSheetBackGuard';
 
@@ -32,7 +32,11 @@ export function PopoverMenu({ open, anchor, items, onSelect, onClose, label }: P
   const [pos, setPos] = useState<{top: number;left: number;origin: string;} | null>(null);
 
   useEffect(() => {
-    if (!open || !anchor) return;
+    if (!open) {
+      setPos(null);
+      return;
+    }
+    if (!anchor) return;
     const r = anchor.getBoundingClientRect();
     const height = items.length * ROW + 8;
     const below = r.bottom + 6 + height <= window.innerHeight - MARGIN;
@@ -48,17 +52,16 @@ export function PopoverMenu({ open, anchor, items, onSelect, onClose, label }: P
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
+  // без анимации закрытия: слой меню снимается сразу и никогда не остаётся невидимым поверх экрана
   return createPortal(
-    <AnimatePresence>
-      {open && pos ?
-      <div key="popover" className="fixed inset-0 z-[80]" data-composer-popup>
+    open && pos ?
+    <div className="fixed inset-0 z-[80]" data-composer-popup>
           <button type="button" aria-label="Закрыть" onClick={onClose} className="absolute inset-0 cursor-default" />
           <motion.div
           role="menu"
           aria-label={label}
           initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.96 }}
           transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }}
           style={{ top: pos.top, left: pos.left, transformOrigin: pos.origin, width: `min(${WIDTH}px, calc(100vw - ${2 * MARGIN}px))` }}
           className="absolute overflow-hidden rounded-[14px] bg-surface/95 py-1 shadow-[0_12px_36px_rgba(29,33,30,0.2)] backdrop-blur">
@@ -83,8 +86,7 @@ export function PopoverMenu({ open, anchor, items, onSelect, onClose, label }: P
           )}
           </motion.div>
         </div> :
-      null}
-    </AnimatePresence>,
+    null,
     document.body
   );
 }
