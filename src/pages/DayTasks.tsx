@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CheckIcon, ChevronRightIcon, PlusIcon } from 'lucide-react';
+import { CheckIcon, ChevronDownIcon, ChevronRightIcon, PlusIcon } from 'lucide-react';
 import { Shell, SubHeader } from '../components/Shell';
 import { DayTaskList } from '../components/DayTaskList';
 import { PrayerRow } from '../components/PrayerRow';
@@ -19,8 +19,6 @@ import type { Task } from '../types';
 
 const byTime = (a: Task, b: Task) =>
 taskAxisMinutes(a.time as string) - taskAxisMinutes(b.time as string) || compareOrder(a, b);
-
-const sectionTitle = 'px-1 pb-1 pt-6 text-[12px] font-medium uppercase tracking-[0.08em] text-muted';
 
 /** фон «Удела» в расписании: цвет сферы (#6E6AA6) с прозрачностью 12% поверх canvas, непрозрачный */
 const RIZQ_SLOT_SURFACE = 'bg-[#E5E5EB]';
@@ -79,8 +77,6 @@ function SphereList({
   tasks,
   slot
 
-
-
 }: {sphereId: 'rizq' | 'other';tasks: Task[];slot?: {start: number;end: number;};}) {
   const navigate = useNavigate();
   const sphere = spheres.find((s) => s.id === sphereId) ?? spheres[spheres.length - 1];
@@ -111,6 +107,33 @@ function SphereList({
         </div> :
       null}
     </div>);
+
+}
+
+/** «История · N» внизу «Сегодня»: свёрнута по умолчанию; снятие отметки возвращает дело на место */
+function HistoryBlock({ tasks }: {tasks: Task[];}) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <section className="mt-6">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex items-center gap-1 px-1 py-1 text-[12px] font-medium uppercase tracking-[0.08em] text-muted">
+        
+        История · <span className="tabular-nums">{tasks.length}</span>
+        <ChevronDownIcon
+          className={`h-3.5 w-3.5 transition-transform duration-200 ease-out ${open ? '' : '-rotate-90'}`}
+          strokeWidth={2}
+          aria-hidden="true" />
+        
+      </button>
+      {open ?
+      <div className="opacity-70">
+          <DayTaskList tasks={tasks} divider="divide-line" surface="bg-canvas" showDate={false} />
+        </div> :
+      null}
+    </section>);
 
 }
 
@@ -151,9 +174,9 @@ function TodayView({ date }: {date: string;}) {
 
   const dayTasks = tasks.filter((t) => t.date === date && t.status !== 'cancelled');
   const timed = dayTasks.filter((t) => t.time);
-  /** выполненные дела уходят из окон в отдельный список внизу */
-  const done = dayTasks.
-  filter((t) => t.status === 'done').
+  /** История: выполненные сегодня (в старых данных без completedOn — дела на сегодня) */
+  const done = tasks.
+  filter((t) => t.status === 'done' && (t.completedOn ? t.completedOn === date : t.date === date)).
   sort((a, b) => (a.completedAt ?? '').localeCompare(b.completedAt ?? ''));
 
   const listTasks = (sphere: 'rizq' | 'other') =>
@@ -285,14 +308,7 @@ function TodayView({ date }: {date: string;}) {
         </div>
       }
 
-      {done.length > 0 ?
-      <>
-          <h2 className={sectionTitle}>Выполнено · {done.length}</h2>
-          <div className="opacity-70">
-            <DayTaskList tasks={done} divider="divide-line" surface="bg-canvas" showDate={false} />
-          </div>
-        </> :
-      null}
+      {done.length > 0 ? <HistoryBlock tasks={done} /> : null}
     </Shell>);
 
 }

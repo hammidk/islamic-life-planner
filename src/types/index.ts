@@ -86,6 +86,10 @@ export interface Task {
   tags?: string[];
   /** время отметки выполнения, «HH:MM» */
   completedAt?: string;
+  /** дата отметки выполнения, YYYY-MM-DD; в старых данных нет */
+  completedOn?: string;
+  /** срочное: значок «!» в списках */
+  urgent?: boolean;
 }
 
 /** Время сферы в ежедневном расписании: «Удел» с 10:00 на 60 минут */

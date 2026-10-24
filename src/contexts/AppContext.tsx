@@ -383,8 +383,8 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     prev.map((t) =>
     t.id === id ?
     t.status === 'done' ?
-    { ...t, status: 'open', completedAt: undefined } :
-    { ...t, status: 'done', completedAt: stamp } :
+    { ...t, status: 'open', completedAt: undefined, completedOn: undefined } :
+    { ...t, status: 'done', completedAt: stamp, completedOn: todayISO() } :
     t
     )
     );
