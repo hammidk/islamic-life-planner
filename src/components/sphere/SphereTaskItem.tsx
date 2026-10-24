@@ -18,6 +18,10 @@ interface SphereTaskItemProps {
   onMove: ((task: Task) => void) | null;
   onMenu: (task: Task) => void;
   controls: DragControls;
+  /** свайп вправо по делу: сделать подзадачей вышестоящего */
+  onIndent?: () => void;
+  /** свайп вправо по подзадаче: вернуть на верхний уровень */
+  onOutdent?: (sub: Task) => void;
 }
 
 /** «На сегодня»: дата = сегодня без времени; повторное нажатие снимает дату */
@@ -44,7 +48,15 @@ function TodayToggle({ task }: {task: Task;}) {
 }
 
 /** Задача сферы с вложенными подзадачами; обе ступени перетаскиваются в пределах своего уровня */
-export function SphereTaskItem({ task, subtasks, onMove, onMenu, controls }: SphereTaskItemProps) {
+export function SphereTaskItem({
+  task,
+  subtasks,
+  onMove,
+  onMenu,
+  controls,
+  onIndent,
+  onOutdent
+}: SphereTaskItemProps) {
   const { deleteTask, reorderTasks } = useApp();
   const { editingId, startEdit } = useQuickAdd();
   const open = (t: Task) => startEdit(t.id);
@@ -58,7 +70,8 @@ export function SphereTaskItem({ task, subtasks, onMove, onMenu, controls }: Sph
         surface="bg-surface"
         label={task.title}
         onLongPress={() => onMenu(task)}
-        onDelete={() => deleteTask(task.id)}>
+        onDelete={() => deleteTask(task.id)}
+        onIndent={onIndent}>
         
         <TaskRow
           task={task}
@@ -99,7 +112,9 @@ export function SphereTaskItem({ task, subtasks, onMove, onMenu, controls }: Sph
             surface="bg-surface"
             label={sub.title}
             onLongPress={() => onMenu(sub)}
-            onDelete={() => deleteTask(sub.id)}>
+            onDelete={() => deleteTask(sub.id)}
+            onIndent={onOutdent ? () => onOutdent(sub) : undefined}
+            indentLabel="На верхний уровень">
             
                 <TaskRow
               task={sub}

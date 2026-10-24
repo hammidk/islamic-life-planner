@@ -27,8 +27,24 @@ export function SectionBlock({
   onMove,
   onAdd
 }: SectionBlockProps) {
-  const { reorderTasks } = useApp();
+  const { reorderTasks, updateTask } = useApp();
   const [menuTask, setMenuTask] = useState<Task | null>(null);
+
+  /**
+   * Свайп вправо, как в «Напоминаниях»: дело становится подзадачей ближайшего дела выше
+   * (сфера и раздел — родителя). Первое дело и дело со своими подзадачами не отступают:
+   * максимум два уровня.
+   */
+  const indent = (task: Task, index: number) => {
+    if (index === 0 || subtasksOf(task.id).length > 0) return;
+    const parent = tasks[index - 1];
+    updateTask(task.id, { parentId: parent.id, sphere: parent.sphere, sectionId: parent.sectionId });
+  };
+
+  /** подзадача возвращается на верхний уровень сразу после родителя и его подзадач */
+  const outdent = (parent: Task, sub: Task) => {
+    updateTask(sub.id, { parentId: undefined, order: (parent.order ?? 0) + 0.5 });
+  };
 
   return (
     <section>
@@ -66,7 +82,9 @@ export function SectionBlock({
             subtasks={subtasksOf(task.id)}
             onMove={onMove}
             onMenu={setMenuTask}
-            controls={controls} />
+            controls={controls}
+            onIndent={() => indent(task, tasks.indexOf(task))}
+            onOutdent={(sub) => outdent(task, sub)} />
 
           } /> :
 

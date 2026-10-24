@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { animate, motion, useMotionValue, useTransform } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
-import { Trash2Icon } from 'lucide-react';
+import { IndentIncreaseIcon, Trash2Icon } from 'lucide-react';
 
 interface GestureTaskRowProps {
   /** непрозрачный фон строки — закрывает красный слой удаления */
@@ -9,6 +9,10 @@ interface GestureTaskRowProps {
   label: string;
   onLongPress: () => void;
   onDelete: () => void;
+  /** свайп вправо — отступ (подзадача) или возврат на верхний уровень; без него свайп вправо выключен */
+  onIndent?: () => void;
+  /** подпись плашки свайпа вправо */
+  indentLabel?: string;
   children: React.ReactNode;
 }
 
@@ -16,6 +20,7 @@ const LONG_PRESS_MS = 480;
 const MOVE_TOLERANCE = 8;
 const DELETE_DISTANCE = 110;
 const DELETE_VELOCITY = -600;
+const INDENT_DISTANCE = 72;
 
 /** Свайп справа налево — удаление, долгое нажатие — меню действий */
 export function GestureTaskRow({
@@ -23,11 +28,14 @@ export function GestureTaskRow({
   label,
   onLongPress,
   onDelete,
+  onIndent,
+  indentLabel = 'Подзадача',
   children
 }: GestureTaskRowProps) {
   const x = useMotionValue(0);
   const deleteOpacity = useTransform(x, [-DELETE_DISTANCE, -16, 0], [1, 0.5, 0]);
   const iconScale = useTransform(x, [-DELETE_DISTANCE, -40], [1, 0.8]);
+  const indentOpacity = useTransform(x, [0, 16, INDENT_DISTANCE], [0, 0.5, 1]);
 
   const timer = useRef<number | undefined>(undefined);
   const origin = useRef<{x: number;y: number;} | null>(null);
@@ -65,6 +73,12 @@ export function GestureTaskRow({
 
   const onDragEnd = (_: unknown, info: PanInfo) => {
     const shouldDelete = info.offset.x < -DELETE_DISTANCE || info.velocity.x < DELETE_VELOCITY;
+    if (onIndent && info.offset.x > INDENT_DISTANCE) {
+      // отступ применяется, строка возвращается на место пружиной (недопустимый — просто пружина)
+      onIndent();
+      animate(x, 0, { type: 'spring', stiffness: 520, damping: 42 });
+      return;
+    }
     if (shouldDelete && !removing.current) {
       removing.current = true;
       animate(x, -480, { duration: 0.2, ease: [0.23, 1, 0.32, 1] }).then(onDelete);
@@ -86,11 +100,24 @@ export function GestureTaskRow({
         </motion.span>
       </motion.div>
 
+      {onIndent ?
+      <motion.div
+        style={{ opacity: indentOpacity }}
+        className="absolute inset-0 flex items-center justify-start rounded-xl bg-primary pl-5 text-white"
+        aria-hidden="true">
+        
+          <span className="flex items-center gap-1.5 text-[13px] font-medium">
+            <IndentIncreaseIcon className="h-4 w-4" strokeWidth={2} />
+            {indentLabel}
+          </span>
+        </motion.div> :
+      null}
+
       <motion.div
         drag="x"
         dragDirectionLock
-        dragConstraints={{ right: 0 }}
-        dragElastic={{ right: 0.04, left: 1 }}
+        dragConstraints={{ right: onIndent ? 110 : 0 }}
+        dragElastic={{ right: onIndent ? 0.2 : 0.04, left: 1 }}
         dragMomentum={false}
         onDragStart={() => {
           clearTimer();
