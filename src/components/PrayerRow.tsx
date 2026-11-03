@@ -62,8 +62,9 @@ export function PrayerRow({ id, name, time, hint, isCurrent = false, isLate = fa
           null}
         </button>
         <p className="min-w-0 flex-1 truncate text-[15px]">
+          {/* сначала время, затем название: «06:18 Фаджр», у Тахаджуда «03:24 — 04:45 Тахаджуд» */}
+          <span className="tabular-nums text-white/85">{time}</span>{' '}
           <span className="font-semibold">{name}</span>
-          <span className="tabular-nums text-white/85"> · {time}</span>
           {hint ? <span className="text-[12.5px] text-white/70"> · {hint}</span> : null}
         </p>
         {isCurrent ?
