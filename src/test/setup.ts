@@ -12,6 +12,7 @@ vi.mock('../utils/userData', async (importOriginal) => {
 
 vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => ({ user: { id: 'test-user' }, loading: false, signOut: async () => {} }),
+  useCurrentUser: () => ({ name: 'Тест', email: 'test@example.com', initial: 'Т' }),
   AuthProvider: ({ children }: {children: unknown;}) => children
 }));
 
@@ -71,10 +72,10 @@ class NoopObserver {
   unobserve() {}
   disconnect() {}
 }
-// @ts-expect-error — минимальные заглушки для jsdom
-window.ResizeObserver = window.ResizeObserver ?? NoopObserver;
-// @ts-expect-error — минимальные заглушки для jsdom
-window.IntersectionObserver = window.IntersectionObserver ?? NoopObserver;
+// минимальные заглушки для jsdom
+const w = window as unknown as Record<string, unknown>;
+w.ResizeObserver = w.ResizeObserver ?? NoopObserver;
+w.IntersectionObserver = w.IntersectionObserver ?? NoopObserver;
 
 afterEach(() => {
   cleanup();

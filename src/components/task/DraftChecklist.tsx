@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { isSubmitEnter } from '../../utils/keyboard';
 import { PlusIcon, XIcon } from 'lucide-react';
 import { taskChecklistSuggestions } from '../../data/taskValues';
 
@@ -10,6 +11,7 @@ interface DraftChecklistProps {
 /** Подпункты ещё не созданной задачи */
 export function DraftChecklist({ items, onChange }: DraftChecklistProps) {
   const [title, setTitle] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const available = taskChecklistSuggestions.filter((s) => !items.includes(s));
 
   const add = (value: string) => {
@@ -53,8 +55,16 @@ export function DraftChecklist({ items, onChange }: DraftChecklistProps) {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && add(title)}
+          onKeyDown={(e) => {
+            if (isSubmitEnter(e)) {
+              e.preventDefault();
+              add(title);
+              inputRef.current?.focus();
+            }
+          }}
           onBlur={() => add(title)}
+          ref={inputRef}
+          enterKeyHint="next"
           placeholder="Добавить пункт"
           className="min-w-0 flex-1 bg-transparent text-[16px] text-ink placeholder:text-muted/80 focus:outline-none" />
         
