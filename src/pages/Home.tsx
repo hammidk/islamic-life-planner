@@ -105,7 +105,7 @@ export function Home() {
                     <SphereIcon id={sphere.id} color={sphere.color} className="h-[16px] w-[16px]" />
                     <span className="text-[14px] font-medium tabular-nums text-ink-soft">{count}</span>
                   </span>
-                  <span className="line-clamp-2 text-[12.5px] leading-tight text-ink">{sphere.name}</span>
+                  <span className="line-clamp-2 text-[12.5px] font-semibold leading-tight text-ink">{sphere.name}</span>
                 </button>
               </li>);
 
