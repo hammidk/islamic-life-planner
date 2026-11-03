@@ -104,7 +104,7 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
       intention: draft.intention.trim() || undefined,
       result: draft.result.trim() || undefined
     });
-    draft.checklist.forEach((item) => addChecklistItem(id, item));
+    draft.checklist.forEach((item) => addChecklistItem(id, item.title));
     return true;
   }, [draft, addTask, addChecklistItem]);
 
