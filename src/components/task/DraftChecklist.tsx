@@ -1,7 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { isSubmitEnter } from '../../utils/keyboard';
 import { PlusIcon, XIcon } from 'lucide-react';
-import { taskChecklistSuggestions } from '../../data/taskValues';
 
 interface DraftChecklistProps {
   items: string[];
@@ -12,7 +11,6 @@ interface DraftChecklistProps {
 export function DraftChecklist({ items, onChange }: DraftChecklistProps) {
   const [title, setTitle] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const available = taskChecklistSuggestions.filter((s) => !items.includes(s));
 
   const add = (value: string) => {
     const name = value.trim();
@@ -36,20 +34,6 @@ export function DraftChecklist({ items, onChange }: DraftChecklistProps) {
           </button>
         </div>
       )}
-      {available.length > 0 ?
-      <div className="flex flex-wrap gap-1.5 py-1.5">
-          {available.map((s) =>
-        <button
-          key={s}
-          type="button"
-          onClick={() => add(s)}
-          className="rounded-full border border-line bg-surface px-2.5 py-1 text-[12.5px] text-ink-soft transition-colors duration-150 ease-out hover:border-primary/40">
-          
-              + {s}
-            </button>
-        )}
-        </div> :
-      null}
       <div className="flex items-center gap-2 py-1.5">
         <PlusIcon className="h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={2.2} aria-hidden="true" />
         <input

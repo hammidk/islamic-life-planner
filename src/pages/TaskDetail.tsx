@@ -6,7 +6,6 @@ import { Checklist } from '../components/Checklist';
 import { TaskDetailForm } from '../components/task/TaskDetailForm';
 import { useApp } from '../contexts/AppContext';
 import { useBack } from '../hooks/useBack';
-import { taskChecklistSuggestions } from '../data/taskValues';
 import { periodForTime } from '../utils/prayer';
 import type { Task } from '../types';
 
@@ -107,7 +106,7 @@ export function TaskDetail() {
           updateTask(task.id, next);
         }}
         checklistCount={checklistCount}
-        checklist={<Checklist targetId={task.id} suggestions={taskChecklistSuggestions} />} />
+        checklist={<Checklist targetId={task.id} />} />
       
 
       <div className="mt-6 flex gap-2.5">

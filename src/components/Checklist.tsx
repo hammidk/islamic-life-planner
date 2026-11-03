@@ -4,12 +4,13 @@ import { useApp } from '../contexts/AppContext';
 
 interface ChecklistProps {
   targetId: string;
-  suggestions: string[];
+  /** подсказки пунктов — только у намазов; у дел их нет */
+  suggestions?: string[];
   /** onPrimary — внутри зелёной карточки намаза */
   tone?: 'default' | 'onPrimary';
 }
 
-export function Checklist({ targetId, suggestions, tone = 'default' }: ChecklistProps) {
+export function Checklist({ targetId, suggestions = [], tone = 'default' }: ChecklistProps) {
   const { checklists, addChecklistItem, toggleChecklistItem } = useApp();
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState('');
