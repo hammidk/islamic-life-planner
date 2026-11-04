@@ -82,8 +82,32 @@ function normalizeSlots(raw: unknown): Partial<Record<SphereId, SphereSlot>> {
   return slots;
 }
 
+/**
+ * Пункты дел и намазов: битые записи выбрасываются, недостающее дополняется по умолчанию.
+ * parentId и note необязательны — старые пункты без них остаются как есть.
+ */
+function normalizeChecklists(raw: unknown): Record<string, ChecklistItem[]> {
+  if (!isRecord(raw)) return {};
+  const out: Record<string, ChecklistItem[]> = {};
+  Object.entries(raw).forEach(([targetId, list]) => {
+    out[targetId] = arr<unknown>(list).
+    filter((i): i is Record<string, unknown> => isRecord(i) && typeof i.id === 'string').
+    map((i) => {
+      const item: ChecklistItem = {
+        ...(i as unknown as ChecklistItem),
+        title: typeof i.title === 'string' ? i.title : '',
+        done: i.done === true
+      };
+      if (typeof i.parentId !== 'string') delete item.parentId;
+      if (typeof i.note !== 'string') delete item.note;
+      return item;
+    });
+  });
+  return out;
+}
+
 /** Защищает приложение от повреждённых или неполных данных */
-function normalize(raw: unknown): UserSnapshot | null {
+export function normalize(raw: unknown): UserSnapshot | null {
   if (!isRecord(raw)) return null;
   const sections = arr<Section>(raw.sections).filter((s) => s && s.id !== LEGACY_OTHER_SECTION);
   const tasks = arr<Task>(raw.tasks).
@@ -105,9 +129,7 @@ function normalize(raw: unknown): UserSnapshot | null {
     habits: arr<Habit>(raw.habits).map((h) => ({ ...h, history: arr<number>(h.history) })),
     goals: arr<Goal>(raw.goals),
     journal: arr<JournalEntry>(raw.journal),
-    checklists: isRecord(raw.checklists) ?
-    raw.checklists as Record<string, ChecklistItem[]> :
-    {},
+    checklists: normalizeChecklists(raw.checklists),
     prayersByDate: isRecord(raw.prayersByDate) ?
     raw.prayersByDate as Record<string, Record<string, boolean>> :
     {},
