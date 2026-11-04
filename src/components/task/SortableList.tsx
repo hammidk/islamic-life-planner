@@ -31,6 +31,14 @@ class MousePointerSensor extends PointerSensor {
 
 }
 
+/** Датчики перетаскивания приложения: палец — долгое нажатие, мышь — по вертикали */
+export function useDragSensors() {
+  return useSensors(
+    useSensor(TouchSensor, { activationConstraint: { delay: LONG_PRESS_MS, tolerance: LONG_PRESS_TOLERANCE } }),
+    useSensor(MousePointerSensor, { activationConstraint: { distance: { y: 6 }, tolerance: { x: 6 } } })
+  );
+}
+
 export interface DragRowState {
   /** обработчики dnd-kit — на передний слой строки */
   dragListeners: Record<string, (e: React.SyntheticEvent) => void> | undefined;
@@ -107,10 +115,7 @@ export function SortableList<T>({
   onNest,
   className
 }: SortableListProps<T>) {
-  const sensors = useSensors(
-    useSensor(TouchSensor, { activationConstraint: { delay: LONG_PRESS_MS, tolerance: LONG_PRESS_TOLERANCE } }),
-    useSensor(MousePointerSensor, { activationConstraint: { distance: { y: 6 }, tolerance: { x: 6 } } })
-  );
+  const sensors = useDragSensors();
   const ids = items.map(getId);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);

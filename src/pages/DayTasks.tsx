@@ -12,52 +12,15 @@ import { InlineCreate } from '../components/task/InlineCreate';
 import { formatDateLabel } from '../utils/calendar';
 import { formatDuration, fromMinutes, getPrayerState, taskAxisMinutes } from '../utils/prayer';
 import { buildTodayPlan } from '../utils/todayPlan';
-import type { PlanItem, PlanWindow } from '../utils/todayPlan';
-import { readPref, writePref } from '../utils/localPrefs';
+import type { PlanWindow } from '../utils/todayPlan';
 import { TodaySphereList } from '../components/today/TodaySphereList';
-import { useSheetBackGuard } from '../hooks/useSheetBackGuard';
+import { BlockDragLayer } from '../components/today/BlockDragLayer';
+import { applyPlacement, flattenPlan, planItemId, shiftPlacement } from '../utils/blockPlacement';
 import { compareOrder } from '../utils/taskOptions';
 import type { Task } from '../types';
 
 const byTime = (a: Task, b: Task) =>
 taskAxisMinutes(a.time as string) - taskAxisMinutes(b.time as string) || compareOrder(a, b);
-
-type MovableSphere = 'rizq' | 'other';
-type BlockPositions = Partial<Record<MovableSphere, string>>;
-
-/** положение «Удела» и «Прочего» по окнам — только на этот день, завтра снова по умолчанию */
-const blocksKey = (date: string) => `ilp.today.blocks.${date}`;
-
-function saveBlockPositions(date: string, value: BlockPositions): void {
-  writePref(blocksKey(date), value);
-  try {
-    // ключи прошлых дней больше не нужны
-    Object.keys(localStorage).
-    filter((k) => k.startsWith('ilp.today.blocks.') && k !== blocksKey(date)).
-    forEach((k) => localStorage.removeItem(k));
-  } catch {
-
-    /* без хранилища — не страшно */}
-}
-
-/** Переносит списки (без слота) в выбранные окна: сразу под намазом, как по умолчанию */
-function applyBlockPositions(plan: PlanWindow[], positions: BlockPositions): PlanWindow[] {
-  const windows = plan.map((w) => ({ ...w, items: [...w.items] }));
-  (['rizq', 'other'] as MovableSphere[]).forEach((sphere) => {
-    const target = windows.find((w) => w.id === positions[sphere]);
-    if (!target) return;
-    const isMovable = (item: PlanItem) => item.kind === 'list' && item.sphere === sphere && !item.slot;
-    const from = windows.find((w) => w.items.some(isMovable));
-    if (!from || from === target) return;
-    const item = from.items.find(isMovable) as PlanItem;
-    from.items = from.items.filter((i) => i !== item);
-    const head = target.items.findIndex(
-      (i) => !(i.kind === 'prayer' || i.kind === 'dayEnd' || i.kind === 'list' && !i.slot)
-    );
-    target.items.splice(head === -1 ? target.items.length : head, 0, item);
-  });
-  return windows;
-}
 
 /**
  * /today — «Сегодня» с намазами и окнами (только с карточки «Сегодня» на Главной);
@@ -165,7 +128,7 @@ function DayEndRow({ entryId }: {entryId?: string;}) {
 }
 
 function TodayView({ date }: {date: string;}) {
-  const { tasks, journal, prayersDone, sphereSlots } = useApp();
+  const { tasks, journal, prayersDone, sphereSlots, blockPlacement, setBlockPlacement } = useApp();
   const { openQuickAdd } = useQuickAdd();
   // «+» на «Сегодня» создаёт дело без даты (сфера «Прочее») карточкой вверху
   useInlineCreateHost({});
@@ -191,32 +154,6 @@ function TodayView({ date }: {date: string;}) {
   ).
   sort(compareOrder);
 
-  const [positions, setPositions] = React.useState<BlockPositions>(() => readPref(blocksKey(date), {}));
-  const [moving, setMoving] = React.useState<MovableSphere | null>(null);
-  React.useEffect(() => {
-    setPositions(readPref(blocksKey(date), {}));
-  }, [date]);
-  // режим переноса закрывается жестом «назад», как окно
-  useSheetBackGuard(moving !== null, () => setMoving(null));
-
-  const moveTo = (sphere: MovableSphere, windowId: string) => {
-    const next = { ...positions, [sphere]: windowId };
-    setPositions(next);
-    saveBlockPositions(date, next);
-    setMoving(null);
-  };
-
-  /** отпускание после перетаскивания: окно, над зоной которого палец */
-  const dropAt = (sphere: MovableSphere, point: {x: number;y: number;}) => {
-    const zones = Array.from(document.querySelectorAll<HTMLElement>('[data-drop-window]'));
-    const zone = zones.find((el) => {
-      const r = el.getBoundingClientRect();
-      return point.y >= r.top + window.scrollY - 16 && point.y <= r.bottom + window.scrollY + 16;
-    });
-    if (zone?.dataset.dropWindow) moveTo(sphere, zone.dataset.dropWindow);else
-    setMoving(null);
-  };
-
   const rawPlan = buildTodayPlan({
     prayers,
     sunrise,
@@ -227,26 +164,16 @@ function TodayView({ date }: {date: string;}) {
     prayersDone,
     rizqSlot: sphereSlots.rizq
   });
-  const plan = rawPlan ? applyBlockPositions(rawPlan, positions) : null;
+  /** положение «Удела»/«Прочего» — только за сегодня; завтра блоки снова встают сами */
+  const todayPlacement = blockPlacement[date];
+  const plan = rawPlan ? applyPlacement(rawPlan, todayPlacement) : null;
+  const order = plan ? flattenPlan(plan) : [];
   const prayersReady = (status === 'ready' || status === 'stale') && plan !== null;
 
   /** подряд идущие дела — один список (перетаскивание, свайп, меню) */
   const renderItems = (planWindow: PlanWindow, prayer: React.ReactNode) => {
     const { id: windowId, items } = planWindow;
     const out: React.ReactNode[] = [];
-    /** зона вставки — под намазом окна (или в начале окна, если намаз отмечен) */
-    const zone = moving ?
-    <button
-      key="drop-zone"
-      type="button"
-      data-drop-window={windowId}
-      onClick={() => moveTo(moving, windowId)}
-      className="my-1.5 flex w-full items-center justify-center rounded-xl border border-dashed border-primary/50 bg-primary-tint/70 py-2.5 text-[13px] font-medium text-primary">
-      
-        Перенести сюда · {planWindow.name}
-      </button> :
-    null;
-    if (zone && !items.some((i) => i.kind === 'prayer')) out.push(zone);
     let run: Task[] = [];
     const flush = () => {
       if (run.length === 0) return;
@@ -270,28 +197,36 @@ function TodayView({ date }: {date: string;}) {
       }
       flush();
       if (item.kind === 'prayer') {
-        out.push(<React.Fragment key="prayer">{prayer}</React.Fragment>);
-        if (zone) out.push(zone);
+        out.push(<div key="prayer" data-plan-id={planItemId(windowId, item)}>{prayer}</div>);
       } else
-      if (item.kind === 'dayEnd') out.push(<DayEndRow key="day-end" entryId={todayEntry?.id} />);else
+      if (item.kind === 'dayEnd') {
+        out.push(
+          <div key="day-end" data-plan-id="dayEnd">
+            <DayEndRow entryId={todayEntry?.id} />
+          </div>
+        );
+      } else
       if (item.kind === 'list') {
         const sphere = item.sphere;
+        const up = shiftPlacement(order, sphere, 'up');
+        const down = shiftPlacement(order, sphere, 'down');
         out.push(
           <TodaySphereList
             key={`list-${sphere}`}
             sphereId={sphere}
             tasks={listTasks(sphere)}
             slot={item.slot}
-            moving={moving === sphere}
-            onToggleMove={() => setMoving((m) => m === sphere ? null : sphere)}
-            onDragStart={() => setMoving(sphere)}
-            onDrop={(point) => dropAt(sphere, point)} />
+            movable
+            onUp={up ? () => setBlockPlacement(date, sphere, up) : undefined}
+            onDown={down ? () => setBlockPlacement(date, sphere, down) : undefined}
+            onReset={todayPlacement?.[sphere] ? () => setBlockPlacement(date, sphere, null) : undefined} />
 
         );
       } else {
         out.push(
           <button
             key={`free-${windowId}-${item.start}`}
+            data-plan-id={planItemId(windowId, item)}
             type="button"
             onClick={() => openQuickAdd({ date, time: fromMinutes(item.start) })}
             aria-label={`Создать дело на ${fromMinutes(item.start)}`}
@@ -339,7 +274,7 @@ function TodayView({ date }: {date: string;}) {
         )}
         </div> :
 
-      <div>
+      <BlockDragLayer onDrop={(sphere, spot) => setBlockPlacement(date, sphere, spot)}>
           {plan.map((w) =>
         <div key={w.id}>
               {renderItems(
@@ -355,7 +290,7 @@ function TodayView({ date }: {date: string;}) {
           )}
             </div>
         )}
-        </div>
+        </BlockDragLayer>
       }
 
       {done.length > 0 ? <HistoryBlock tasks={done} /> : null}
