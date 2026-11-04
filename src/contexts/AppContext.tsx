@@ -187,7 +187,8 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
       prayersByDate,
       sphereSlots,
       blockPlacement,
-      customSpheres
+      customSpheres,
+      prayerItemsMigrated: initial.prayerItemsMigrated
     }),
     [tasks, sections, habits, goals, journalRaw, checklists, prayersByDate, sphereSlots, blockPlacement, customSpheres]
   );

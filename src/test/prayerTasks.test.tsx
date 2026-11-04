@@ -185,3 +185,61 @@ describe('«Привязка к намазу…»', () => {
     expect(appState.tasks[0]).toMatchObject({ prayerId: 'isha', date: TEST_TODAY });
   });
 });
+
+describe('миграция старых пунктов намазов', () => {
+  const old = {
+    tasks: [{ id: 'a', title: 'Дело', sphere: 'other', period: 'untilDhuhr', status: 'open' }],
+    checklists: {
+      fajr: [
+      { id: 'p1', title: 'Азкары', done: true },
+      { id: 'p2', title: 'Аят аль-Курси', done: false, parentId: 'p1', note: 'после салама' },
+      { id: 'p3', title: '   ', done: false }],
+
+      tahajjud: [{ id: 't1', title: 'Витр', done: false }],
+      'task-x': [{ id: 'c1', title: 'Пункт дела', done: false }]
+    }
+  };
+
+  it('каждый пункт намаза — задача блока: «Вера», сегодня, без повтора; исходники на месте', () => {
+    const snap = normalize(old)!;
+    expect(snap.prayerItemsMigrated).toBe(true);
+    const migrated = snap.tasks.filter((t) => t.prayerId);
+    expect(migrated).toEqual([
+    { id: 'pt_fajr_p1', title: 'Азкары', sphere: 'faith', period: 'untilDhuhr', status: 'done', date: TEST_TODAY, prayerId: 'fajr', order: 0 },
+    {
+      id: 'pt_fajr_p2', title: 'Аят аль-Курси', sphere: 'faith', period: 'untilDhuhr', status: 'open', date: TEST_TODAY,
+      prayerId: 'fajr', order: 1, description: 'после салама', parentId: 'pt_fajr_p1'
+    },
+    { id: 'pt_tahajjud_t1', title: 'Витр', sphere: 'faith', period: 'untilDhuhr', status: 'open', date: TEST_TODAY, prayerId: 'tahajjud', order: 0 }]
+    );
+    expect(migrated.every((t) => !t.repeat && !t.doneDates)).toBe(true);
+    // пункты дел не трогаются, исходные записи не удаляются
+    expect(snap.checklists.fajr).toHaveLength(3);
+    expect(snap.checklists['task-x']).toHaveLength(1);
+    expect(snap.tasks.filter((t) => !t.prayerId)).toHaveLength(1);
+  });
+
+  it('идемпотентна: два запуска (и сохранение между ними) дают один результат', () => {
+    const once = normalize(old)!;
+    const twice = normalize(JSON.parse(JSON.stringify(once)))!;
+    expect(twice).toEqual(once);
+    // даже без флага задачи не задваиваются
+    const noFlag = normalize({ ...JSON.parse(JSON.stringify(once)), prayerItemsMigrated: false })!;
+    expect(noFlag.tasks).toHaveLength(once.tasks.length);
+  });
+
+  it('старые данные без новых полей не ломаются', () => {
+    const snap = normalize({ tasks: [], checklists: {} })!;
+    expect(snap.tasks).toEqual([]);
+    expect(snap.prayerItemsMigrated).toBe(true);
+    expect(normalize({})!.tasks).toEqual([]);
+  });
+
+  it('перенесённые пункты видны в блоке намаза', async () => {
+    const user = userEvent.setup();
+    const snap = normalize(old)!;
+    renderApp('/today', { tasks: snap.tasks, checklists: snap.checklists });
+    await user.click(screen.getByRole('button', { name: 'Показать дела: Тахаджуд' }));
+    expect(screen.getByLabelText('Витр')).toBeTruthy();
+  });
+});
