@@ -4,6 +4,7 @@ import { SphereIcon } from './SphereIcon';
 import { useApp } from '../contexts/AppContext';
 import { useLive } from '../contexts/LiveDataContext';
 import { isDoneOn } from '../utils/occurrence';
+import { prayerName } from '../data/appData';
 import { useSpheres } from '../hooks/useSpheres';
 import { formatRowMeta, formatTimePrefix } from '../utils/taskOptions';
 import type { Task } from '../types';
@@ -26,6 +27,8 @@ interface TaskRowProps {
   showPrefix?: boolean;
   /** день списка: у повторяющегося дела отметка относится к этому вхождению (по умолчанию сегодня) */
   day?: string;
+  /** без подписи намаза — строка и так в блоке своего намаза */
+  hidePrayer?: boolean;
 }
 
 export function TaskRow({
@@ -38,7 +41,8 @@ export function TaskRow({
   sphereColor = false,
   durationInMeta = false,
   showPrefix = false,
-  day
+  day,
+  hidePrayer = false
 }: TaskRowProps) {
   const { toggleTask } = useApp();
   const { todayISO } = useLive();
@@ -48,7 +52,11 @@ export function TaskRow({
   const prefix = showPrefix ? formatTimePrefix(task, todayISO) : null;
   const { getSphere } = useSpheres();
   const ownSphere = getSphere(task.sphere);
-  const meta = formatRowMeta(task, { showDate, withSphere: !sphereColor, withDuration: durationInMeta, sphereName: ownSphere.name });
+  const meta = formatRowMeta(task, { showDate, withSphere: !sphereColor,
+    withDuration: durationInMeta,
+    sphereName: ownSphere.name,
+    prayerName: task.prayerId && !hidePrayer ? prayerName(task.prayerId) : undefined
+  });
   const sphere = sphereColor ? ownSphere : null;
 
   return (

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalize } from '../utils/userData';
+import { moveUnder } from '../utils/taskTree';
 import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { appState, makeTask, renderApp } from './renderApp';
@@ -122,5 +123,39 @@ describe('показ в блоке намаза', () => {
     expect(screen.queryByLabelText('Работа')).toBeNull();
     expect(free()).toEqual(before);
     expect(screen.getByRole('button', { name: 'Показать дела: Аср' }).textContent).toContain('0/1');
+  });
+});
+
+describe('задачи намаза вне «Сегодня»', () => {
+  const sunna = () => makeTask('Сунна', { sphere: 'faith', prayerId: 'asr', date: TEST_TODAY, time: '15:30' });
+
+  it('на странице сферы «Вера» — обычная строка с подписью «Аср» и префиксом', () => {
+    renderApp('/sphere/faith', { tasks: [sunna()] });
+    const row = screen.getByLabelText('Сунна');
+    expect(row.textContent).toContain('Аср');
+    expect(row.textContent).toContain('Вт 15:30');
+  });
+
+  it('на экране дня и в календаре — как обычное дело', () => {
+    const { unmount } = renderApp(`/day/${TEST_TODAY}`, { tasks: [sunna()] });
+    expect(screen.getByLabelText('Сунна').textContent).toContain('Аср');
+    unmount();
+    renderApp('/week', { tasks: [sunna()] });
+    const rows = Array.from(screen.getByRole('region', { name: 'Неделя' }).querySelectorAll('li'));
+    expect(rows.filter((li) => li.textContent?.includes('1 дело'))).toHaveLength(1);
+  });
+
+  it('в блоке своего намаза подписи намаза нет', async () => {
+    const user = userEvent.setup();
+    renderApp('/today', { tasks: [sunna()] });
+    await user.click(screen.getByRole('button', { name: 'Показать дела: Аср' }));
+    expect(screen.getByLabelText('Сунна').textContent).not.toContain('Аср');
+  });
+
+  it('подзадача задачи намаза остаётся в его блоке', () => {
+    const parent = sunna();
+    const tasks = [parent, makeTask('Дуа', { sphere: 'other', date: TEST_TODAY })];
+    const res = moveUnder(tasks, tasks[1].id, parent.id);
+    expect(res.ok && res.tasks[1]).toMatchObject({ parentId: parent.id, prayerId: 'asr', sphere: 'faith' });
   });
 });

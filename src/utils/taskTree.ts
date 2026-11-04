@@ -78,7 +78,10 @@ export function moveUnder(tasks: Task[], id: string, newParentId: string): TreeR
   return {
     ok: true,
     tasks: tasks.map((t) =>
-    t.id === id ? { ...t, parentId: newParentId, sphere: parent.sphere, sectionId: parent.sectionId, order } : t
+    t.id === id ?
+    // подзадача задачи намаза остаётся в его блоке
+    { ...t, parentId: newParentId, sphere: parent.sphere, sectionId: parent.sectionId, prayerId: parent.prayerId, order } :
+    t
     )
   };
 }

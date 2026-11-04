@@ -113,7 +113,7 @@ export function PrayerRow({ id, name, time, day, hint, isCurrent = false, isLate
             <InlineCreate slot={slot} lockedChip={`К намазу: ${prayerName(prayerId)}`} />
           </div>
           {openTasks.length > 0 ?
-        <DayTaskList tasks={openTasks} divider="divide-line" surface="bg-canvas" showDate={false} day={day} hideDone /> :
+        <DayTaskList tasks={openTasks} divider="divide-line" surface="bg-canvas" showDate={false} day={day} hidePrayer hideDone /> :
         null}
           {suggestions.length > 0 ?
         <div className="flex flex-wrap gap-1.5 pb-1 pt-2">

@@ -12,7 +12,7 @@ next: Task[],
 id: string)
 {
   const t = next.find((x) => x.id === id);
-  if (t) updateTask(id, { parentId: t.parentId, sphere: t.sphere, sectionId: t.sectionId, order: t.order });
+  if (t) updateTask(id, { parentId: t.parentId, sphere: t.sphere, sectionId: t.sectionId, prayerId: t.prayerId, order: t.order });
 }
 
 /** Сделать подзадачей / вынести, с тостом, если нельзя */
