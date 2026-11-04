@@ -10,6 +10,7 @@ import { SphereDetail } from '../pages/SphereDetail';
 import { SectionDetail } from '../pages/SectionDetail';
 import { TaskDetail } from '../pages/TaskDetail';
 import { Journal } from '../pages/Journal';
+import { WeekTasks } from '../pages/WeekTasks';
 import type { ChecklistItem, CustomSphere, Section, Task } from '../types';
 import type { BlockPlacement } from '../utils/blockPlacement';
 
@@ -76,6 +77,7 @@ data: {tasks?: Task[];sections?: Section[];checklists?: Record<string, Checklist
               <Route path="/sphere/:id/section/:sectionId" element={<SectionDetail />} />
               <Route path="/task/:id" element={<TaskDetail />} />
               <Route path="/journal" element={<Journal />} />
+              <Route path="/week" element={<WeekTasks />} />
             </Routes>
           </QuickAddProvider>
         </MemoryRouter>

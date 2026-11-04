@@ -22,6 +22,7 @@ import { HISTORY_DAYS, rollHabit, toggleHabitToday } from '../utils/habits';
 import { saveUserData } from '../utils/userData';
 import type { UserSnapshot } from '../utils/userData';
 import type { BlockPlacement, BlockSpot, MovableBlock } from '../utils/blockPlacement';
+import { isRepeating, occursOn, toggleDoneDate, withDefaultDate } from '../utils/occurrence';
 import { createSphere, deleteSphere, mergeSpheres, resolveSphere, updateSphere } from '../utils/spheres';
 import type { SphereInput, SphereResult } from '../utils/spheres';
 import type {
@@ -75,7 +76,11 @@ interface AppState {
   restoreTasks: (list: Task[]) => void;
   /** сохраняет ручной порядок: ids в новом порядке */
   reorderTasks: (ids: string[]) => void;
-  toggleTask: (id: string) => void;
+  /**
+   * Отметка выполнения. У повторяющегося дела — только вхождение дня day (по умолчанию сегодня),
+   * статус дела не меняется; у обычного — как раньше.
+   */
+  toggleTask: (id: string, day?: string) => void;
   /** пункты, прикреплённые к задаче или намазу (ключ — id задачи или намаза) */
   checklists: Record<string, ChecklistItem[]>;
   /** afterId — вставить сразу после этого пункта; возвращает id нового пункта */
@@ -324,7 +329,8 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
         sphere,
         period,
         sectionId: task.sectionId || undefined,
-        date: task.date || undefined,
+        // время или повтор без выбранной даты — дело начинается сегодня
+        date: withDefaultDate({ date: task.date || undefined, time: task.time, repeat: task.repeat }, todayISO()).date,
         parallelGroup: group,
         id,
         status: 'open' as const
@@ -335,7 +341,14 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
   }, []);
 
   const updateTask = useCallback((id: string, patch: Partial<Omit<Task, 'id'>>) => {
-    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, ...patch } : t));
+    setTasks((prev) =>
+    prev.map((t) => {
+      if (t.id !== id) return t;
+      const next = { ...t, ...patch };
+      // время или повтор появились, а даты нет — дело начинается сегодня
+      return 'time' in patch || 'repeat' in patch || 'date' in patch ? withDefaultDate(next, todayISO()) : next;
+    })
+    );
   }, []);
 
   const addChecklistItem = useCallback((targetId: string, title: string, afterId?: string): string => {
@@ -439,16 +452,19 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     );
   }, []);
 
-  const toggleTask = useCallback((id: string) => {
+  const toggleTask = useCallback((id: string, day?: string) => {
     const d = new Date();
     const stamp = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     setTasks((prev) =>
     prev.map((t) =>
-    t.id === id ?
+    t.id !== id ?
+    t :
+    isRepeating(t) ?
+    // вхождение одного дня: в следующий раз дело снова не выполнено
+    { ...t, doneDates: toggleDoneDate(t.doneDates, day ?? todayISO()) } :
     t.status === 'done' ?
     { ...t, status: 'open', completedAt: undefined, completedOn: undefined } :
-    { ...t, status: 'done', completedAt: stamp, completedOn: todayISO() } :
-    t
+    { ...t, status: 'done', completedAt: stamp, completedOn: todayISO() }
     )
     );
   }, []);
@@ -533,7 +549,7 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
 
   const tasksForPeriod = useCallback(
     (periodId: Period['id']) =>
-    tasks.filter((t) => t.period === periodId && t.date === live.todayISO),
+    tasks.filter((t) => t.period === periodId && occursOn(t, live.todayISO)),
     [tasks, live.todayISO]
   );
 

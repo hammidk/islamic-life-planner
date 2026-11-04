@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckIcon, ChevronRightIcon } from 'lucide-react';
+import { isDoneOn, occursOn } from '../utils/occurrence';
 import { useLive } from '../contexts/LiveDataContext';
 import { Shell, SubHeader } from '../components/Shell';
 import { useApp } from '../contexts/AppContext';
@@ -31,12 +32,12 @@ export function History() {
   const allPrayers = [{ id: 'tahajjud', name: 'Тахаджуд', time: tahajjud.start }, ...prayers];
 
   const doneToday = tasks.
-  filter((t) => t.date === APP_DATE && t.status === 'done').
+  filter((t) => occursOn(t, APP_DATE) && isDoneOn(t, APP_DATE)).
   sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''));
   const prayersToday = allPrayers.filter((p) => prayersDone[p.id]);
 
-  const todayDone = tasks.filter((t) => t.date === APP_DATE && t.status === 'done').length;
-  const todayTotal = tasks.filter((t) => t.date === APP_DATE && t.status !== 'cancelled').length;
+  const todayDone = doneToday.length;
+  const todayTotal = tasks.filter((t) => occursOn(t, APP_DATE)).length;
 
   /** прошедшие дни собираются из реальных отметок: дела, намазы, дневник */
   const pastDays = useMemo(() => {

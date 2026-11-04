@@ -12,6 +12,8 @@ interface DayTaskListProps {
   showDate?: boolean;
   /** название сферы цветом сферы */
   sphereColor?: boolean;
+  /** день списка — для отметки вхождений повторяющихся дел */
+  day?: string;
 }
 
 /** Список дел дня (Сегодня, день, история): строки с раскрываемыми пунктами */
@@ -21,13 +23,15 @@ export function DayTaskList({
   surface = 'bg-surface',
   hideDone = false,
   showDate = true,
-  sphereColor = false
+  sphereColor = false,
+  day
 }: DayTaskListProps) {
   return (
     <TaskList
       tasks={tasks}
       divider={divider}
       hideDone={hideDone}
+      day={day}
       look={{ surface, showDate, sphereColor, checklist: true }} />);
 
 

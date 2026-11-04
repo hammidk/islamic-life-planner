@@ -2,6 +2,8 @@ import React from 'react';
 import { CheckIcon } from 'lucide-react';
 import { SphereIcon } from './SphereIcon';
 import { useApp } from '../contexts/AppContext';
+import { useLive } from '../contexts/LiveDataContext';
+import { isDoneOn } from '../utils/occurrence';
 import { useSpheres } from '../hooks/useSpheres';
 import { formatRowMeta, formatTimePrefix } from '../utils/taskOptions';
 import type { Task } from '../types';
@@ -22,6 +24,8 @@ interface TaskRowProps {
   durationInMeta?: boolean;
   /** «Вт 10:00» перед названием — только в списках сфер и разделов */
   showPrefix?: boolean;
+  /** день списка: у повторяющегося дела отметка относится к этому вхождению (по умолчанию сегодня) */
+  day?: string;
 }
 
 export function TaskRow({
@@ -33,13 +37,15 @@ export function TaskRow({
   showDate = true,
   sphereColor = false,
   durationInMeta = false,
-  showPrefix = false
+  showPrefix = false,
+  day
 }: TaskRowProps) {
   const { toggleTask } = useApp();
-  const done = checked ?? task.status === 'done';
+  const { todayISO } = useLive();
+  const done = checked ?? isDoneOn(task, day ?? todayISO);
   const inactive = task.status === 'cancelled';
   const note = task.description?.split('\n').find((line) => line.trim())?.trim();
-  const prefix = showPrefix ? formatTimePrefix(task) : null;
+  const prefix = showPrefix ? formatTimePrefix(task, todayISO) : null;
   const { getSphere } = useSpheres();
   const ownSphere = getSphere(task.sphere);
   const meta = formatRowMeta(task, { showDate, withSphere: !sphereColor, withDuration: durationInMeta, sphereName: ownSphere.name });
@@ -49,7 +55,7 @@ export function TaskRow({
     <div className="flex min-w-0 items-center gap-3 py-3">
       <button
         type="button"
-        onClick={() => onToggle ? onToggle() : toggleTask(task.id)}
+        onClick={() => onToggle ? onToggle() : toggleTask(task.id, day ?? todayISO)}
         aria-pressed={done}
         aria-label={done ? `Отменить выполнение: ${task.title}` : `Выполнить: ${task.title}`}
         className={`flex h-[23px] w-[23px] shrink-0 items-center justify-center self-start rounded-full border transition-colors duration-150 ease-out ${
