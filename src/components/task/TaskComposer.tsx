@@ -8,6 +8,7 @@ import { SphereSheet } from './SphereSheet';
 import { RepeatSheet } from './RepeatSheet';
 import { repeatLabel, repeatMenuItems, repeatRuleForKey } from './repeatMenu';
 import { todayISO } from '../../utils/prayer';
+import { isSubmitEnter } from '../../utils/keyboard';
 import { spheres } from '../../data/appData';
 import { dateMenuOptions, formatDateLine, formatShortDate, reminderAfterTimeChange } from '../../utils/taskOptions';
 import type { Reminder, RepeatRule, SphereId } from '../../types';
@@ -164,14 +165,14 @@ export function TaskComposer({
           value={value.title}
           onChange={(e) => onChange({ title: e.target.value })}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (isSubmitEnter(e)) {
               e.preventDefault();
               onSubmit();
             }
           }}
           placeholder={placeholder}
           aria-label="Название"
-          enterKeyHint="done"
+          enterKeyHint="next"
           className="min-w-0 flex-1 bg-transparent text-[17px] text-ink placeholder:text-muted/80 focus:outline-none" />
 
         <button
@@ -188,7 +189,7 @@ export function TaskComposer({
         value={value.description}
         onChange={(e) => onChange({ description: e.target.value })}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') {
+          if (isSubmitEnter(e)) {
             e.preventDefault();
             onSubmit();
           }

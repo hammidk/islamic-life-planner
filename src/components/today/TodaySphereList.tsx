@@ -61,7 +61,7 @@ function NestedSection({
         <button
           type="button"
           onClick={() => navigate(`/sphere/rizq/section/${sectionId}`)}
-          className="min-w-0 flex-1 truncate text-left text-[14px] font-medium text-ink-soft">
+          className="min-w-0 flex-1 truncate text-left text-[14px] font-semibold text-ink">
 
           {title}
           <span className="font-normal tabular-nums text-muted"> · {tasks.length}</span>
@@ -145,7 +145,7 @@ export function TodaySphereList({
           className="flex min-w-0 flex-1 items-center gap-2 text-left">
 
           <SphereIcon id={sphere.id} color={sphere.color} className="h-[16px] w-[16px] shrink-0" />
-          <span className={`min-w-0 truncate text-[14px] font-medium ${slot ? 'text-ink' : 'text-muted'}`}>
+          <span className="min-w-0 truncate text-[14px] font-semibold text-ink">
             {sphere.name}
             {tasks.length > 0 ? <span className="font-normal tabular-nums text-muted"> · {tasks.length}</span> : null}
             {slot ?

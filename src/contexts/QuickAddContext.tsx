@@ -104,22 +104,23 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
       intention: draft.intention.trim() || undefined,
       result: draft.result.trim() || undefined
     });
-    draft.checklist.forEach((item) => addChecklistItem(id, item));
+    draft.checklist.forEach((item) => addChecklistItem(id, item.title));
     return true;
   }, [draft, addTask, addChecklistItem]);
 
   /** быстрый лист и карточка вверху списка: после добавления — новая пустая с тем же контекстом */
   const commitAndContinue = useCallback((): boolean => {
     if (!commit()) return false;
+    // следующая карточка наследует сферу, раздел и дату; время, длительность, повтор и заметка сбрасываются
     const next: Partial<TaskDraft> = {
-      ...presetRef.current,
+      date: draft.date,
       sphere: draft.sphere,
       sectionId: draft.sectionId
     };
     baselineRef.current = JSON.stringify({ ...emptyDraft(), ...next });
     resetDraft(next);
     return true;
-  }, [commit, draft.sphere, draft.sectionId, resetDraft]);
+  }, [commit, draft.date, draft.sphere, draft.sectionId, resetDraft]);
 
   const saveFull = useCallback(() => {
     setConfirm(false);

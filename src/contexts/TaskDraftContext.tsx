@@ -18,7 +18,8 @@ export interface TaskDraft {
   urgent?: boolean;
   intention: string;
   result: string;
-  checklist: string[];
+  /** подпункты будущего дела; id — только для правки в черновике */
+  checklist: {id: string;title: string;}[];
 }
 
 export const emptyDraft = (): TaskDraft => ({

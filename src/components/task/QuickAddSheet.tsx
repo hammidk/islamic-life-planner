@@ -35,10 +35,9 @@ export function QuickAddSheet({ open, onDismiss, onExpand, onCommit }: QuickAddS
   }, [open]);
 
   const submit = () => {
-    if (onCommit()) {
-      setAdded(true);
-      titleRef.current?.focus();
-    }
+    if (onCommit()) setAdded(true);
+    // фокус синхронно: поле то же самое, клавиатура остаётся открытой
+    titleRef.current?.focus();
   };
 
   const onDragEnd = (_: unknown, info: PanInfo) => {

@@ -51,8 +51,11 @@ export function InlineCreate() {
         }}
         onChange={(patch) => updateDraft(patch)}
         onSubmit={() => {
-          if (!commitInline()) closeInline();else
+          // пустое название: ничего не создаём, карточка и клавиатура остаются
+          commitInline();
+          // фокус синхронно в том же обработчике: на iPhone клавиатура не закрывается
           inputRef.current?.focus();
+          rootRef.current?.scrollIntoView({ block: 'nearest' });
         }}
         onExpand={expandDraft} />
       

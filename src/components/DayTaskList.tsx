@@ -10,7 +10,6 @@ import { TaskActionSheet } from './task/TaskActionSheet';
 import { InlineEdit } from './task/InlineEdit';
 import { useApp } from '../contexts/AppContext';
 import { useQuickAdd } from '../contexts/QuickAddContext';
-import { taskChecklistSuggestions } from '../data/taskValues';
 import type { Task } from '../types';
 
 interface TaskItemProps {
@@ -87,7 +86,7 @@ function TaskWithChecklist({
       </GestureTaskRow>
       {open ?
       <div className="pb-3 pl-[35px]">
-          <Checklist targetId={task.id} suggestions={taskChecklistSuggestions} />
+          <Checklist targetId={task.id} />
         </div> :
       null}
     </div>);

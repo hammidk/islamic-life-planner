@@ -73,8 +73,11 @@ interface AppState {
   toggleTask: (id: string) => void;
   /** пункты, прикреплённые к задаче или намазу (ключ — id задачи или намаза) */
   checklists: Record<string, ChecklistItem[]>;
-  addChecklistItem: (targetId: string, title: string) => void;
+  /** afterId — вставить сразу после этого пункта; возвращает id нового пункта */
+  addChecklistItem: (targetId: string, title: string, afterId?: string) => string;
   toggleChecklistItem: (targetId: string, itemId: string) => void;
+  renameChecklistItem: (targetId: string, itemId: string, title: string) => void;
+  removeChecklistItem: (targetId: string, itemId: string) => void;
   /** время сфер в ежедневном расписании */
   sphereSlots: Partial<Record<SphereId, SphereSlot>>;
   /** null — убрать сферу из расписания */
@@ -314,13 +317,29 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     setTasks((prev) => prev.map((t) => t.id === id ? { ...t, ...patch } : t));
   }, []);
 
-  const addChecklistItem = useCallback((targetId: string, title: string) => {
+  const addChecklistItem = useCallback((targetId: string, title: string, afterId?: string): string => {
+    const id = `c${Date.now()}${Math.random().toString(36).slice(2, 7)}`;
+    setChecklists((prev) => {
+      const list = prev[targetId] ?? [];
+      const item = { id, title, done: false };
+      const at = afterId ? list.findIndex((i) => i.id === afterId) : -1;
+      const next = at === -1 ? [...list, item] : [...list.slice(0, at + 1), item, ...list.slice(at + 1)];
+      return { ...prev, [targetId]: next };
+    });
+    return id;
+  }, []);
+
+  const renameChecklistItem = useCallback((targetId: string, itemId: string, title: string) => {
     setChecklists((prev) => ({
       ...prev,
-      [targetId]: [
-      ...(prev[targetId] ?? []),
-      { id: `c${Date.now()}${Math.random().toString(36).slice(2, 7)}`, title, done: false }]
+      [targetId]: (prev[targetId] ?? []).map((i) => i.id === itemId ? { ...i, title } : i)
+    }));
+  }, []);
 
+  const removeChecklistItem = useCallback((targetId: string, itemId: string) => {
+    setChecklists((prev) => ({
+      ...prev,
+      [targetId]: (prev[targetId] ?? []).filter((i) => i.id !== itemId)
     }));
   }, []);
 
@@ -459,6 +478,8 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     checklists,
     addChecklistItem,
     toggleChecklistItem,
+    renameChecklistItem,
+    removeChecklistItem,
     sphereSlots,
     setSphereSlot,
     prayersDone,
