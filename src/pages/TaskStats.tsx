@@ -3,7 +3,7 @@ import { Shell, SubHeader } from '../components/Shell';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { useApp } from '../contexts/AppContext';
 import { useLive } from '../contexts/LiveDataContext';
-import { spheres } from '../data/appData';
+import { useSpheres } from '../hooks/useSpheres';
 import { computeTaskStats, formatHours } from '../utils/stats';
 import type { StatsRange } from '../utils/stats';
 
@@ -11,7 +11,8 @@ export function TaskStats() {
   const { tasks } = useApp();
   const { todayISO } = useLive();
   const [range, setRange] = useState<StatsRange>('week');
-  const s = computeTaskStats(tasks, range, todayISO);
+  const { getSphere } = useSpheres();
+  const s = computeTaskStats(tasks, range, todayISO, (id) => getSphere(id).id);
   const sphereTotal = s.bySphere.reduce((acc, d) => acc + d.minutes, 0);
   const sphereMax = s.bySphere[0]?.minutes ?? 0;
   const maxBucket = Math.max(0, ...s.buckets.map((b) => b.value));
@@ -96,8 +97,7 @@ export function TaskStats() {
 
           <div className="mt-3.5 space-y-3">
                 {s.bySphere.map((d) => {
-              const sphere = spheres.find((s2) => s2.id === d.id);
-              if (!sphere) return null;
+              const sphere = getSphere(d.id);
               return (
                 <div key={d.id} className="flex items-center gap-3">
                       <span className="w-[104px] shrink-0 truncate text-[13px] text-ink-soft">

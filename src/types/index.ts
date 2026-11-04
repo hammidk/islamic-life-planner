@@ -1,17 +1,29 @@
-export type SphereId =
-'faith' |
-'family' |
-'health' |
-'rizq' |
-'knowledge' |
-'charity' |
-'ideas' |
-'other';
+import type { ColorKey, IconKey } from '../data/spheres';
+
+/**
+ * Встроенные: 'faith' | 'rizq' | 'health' | 'family' | 'ideas' | 'other';
+ * пользовательские — 'c_<случайный>'. Неизвестный id показывается как «Прочее».
+ */
+export type SphereId = string;
 
 export interface Sphere {
   id: SphereId;
   name: string;
+  /** hex */
   color: string;
+  icon: IconKey;
+  /** встроенная: удалить и переименовать нельзя */
+  builtin?: boolean;
+}
+
+/** Сфера, созданная пользователем; хранится в данных пользователя (customSpheres) */
+export interface CustomSphere {
+  id: string;
+  name: string;
+  icon: IconKey;
+  color: ColorKey;
+  order: number;
+  createdAt: string;
 }
 
 /** Периоды дня, ограниченные намазами */

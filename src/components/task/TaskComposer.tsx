@@ -9,7 +9,7 @@ import { RepeatSheet } from './RepeatSheet';
 import { repeatLabel, repeatMenuItems, repeatRuleForKey } from './repeatMenu';
 import { todayISO } from '../../utils/prayer';
 import { isSubmitEnter } from '../../utils/keyboard';
-import { spheres } from '../../data/appData';
+import { useSpheres } from '../../hooks/useSpheres';
 import { dateMenuOptions, formatDateLine, formatShortDate, reminderAfterTimeChange } from '../../utils/taskOptions';
 import type { Reminder, RepeatRule, SphereId } from '../../types';
 
@@ -101,7 +101,8 @@ export function TaskComposer({
   const [repeatMenu, setRepeatMenu] = useState(false);
   const dateChipRef = useRef<HTMLButtonElement>(null);
   const repeatChipRef = useRef<HTMLButtonElement>(null);
-  const sphere = spheres.find((s) => s.id === value.sphere) ?? spheres[spheres.length - 1];
+  const { getSphere } = useSpheres();
+  const sphere = getSphere(value.sphere);
   const iconClass = 'h-4 w-4';
 
   const options = dateMenuOptions();

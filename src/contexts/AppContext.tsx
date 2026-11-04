@@ -9,7 +9,6 @@ import React, {
 'react';
 import { differenceInCalendarDays, format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { spheres } from '../data/appData';
 import { useLive } from './LiveDataContext';
 import { useAuth } from './AuthContext';
 import {
@@ -23,8 +22,11 @@ import { HISTORY_DAYS, rollHabit, toggleHabitToday } from '../utils/habits';
 import { saveUserData } from '../utils/userData';
 import type { UserSnapshot } from '../utils/userData';
 import type { BlockPlacement, BlockSpot, MovableBlock } from '../utils/blockPlacement';
+import { createSphere, deleteSphere, mergeSpheres, resolveSphere, updateSphere } from '../utils/spheres';
+import type { SphereInput, SphereResult } from '../utils/spheres';
 import type {
   ChecklistItem,
+  CustomSphere,
   Goal,
   Habit,
   JournalEntry,
@@ -100,6 +102,12 @@ interface AppState {
   addHabit: (input: string | NewHabit) => void;
   saveJournal: (entry: Omit<JournalEntry, 'id' | 'date' | 'label'>) => void;
   getSphere: (id: Sphere['id']) => Sphere;
+  /** сферы пользователя (встроенные — в data/spheres) */
+  customSpheres: CustomSphere[];
+  addSphere: (input: SphereInput) => SphereResult;
+  editSphere: (id: string, input: SphereInput) => SphereResult;
+  /** дела и разделы сферы переезжают в «Прочее»; false — сферу удалить нельзя */
+  removeSphere: (id: string) => boolean;
   tasksForPeriod: (periodId: Period['id']) => Task[];
   syncStatus: SyncStatus;
   /** сохраняет несохранённое, очищает состояние и выходит из аккаунта */
@@ -146,6 +154,7 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
   const [sphereSlots, setSphereSlots] = useState<Partial<Record<SphereId, SphereSlot>>>(
     initial.sphereSlots
   );
+  const [customSpheres, setCustomSpheres] = useState<CustomSphere[]>(initial.customSpheres ?? []);
   const [blockPlacement, setBlockPlacementState] = useState<BlockPlacement>(initial.blockPlacement ?? {});
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(offline ? 'offline' : 'saved');
 
@@ -172,9 +181,10 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
       checklists,
       prayersByDate,
       sphereSlots,
-      blockPlacement
+      blockPlacement,
+      customSpheres
     }),
-    [tasks, sections, habits, goals, journalRaw, checklists, prayersByDate, sphereSlots, blockPlacement]
+    [tasks, sections, habits, goals, journalRaw, checklists, prayersByDate, sphereSlots, blockPlacement, customSpheres]
   );
 
   const snapshotRef = useRef(snapshot);
@@ -482,9 +492,43 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     });
   }, []);
 
-  const getSphere = useCallback(
-    (id: Sphere['id']) => spheres.find((s) => s.id === id) ?? spheres[spheres.length - 1],
-    []
+  const allSpheres = useMemo(() => mergeSpheres(customSpheres), [customSpheres]);
+  const getSphere = useCallback((id: Sphere['id']) => resolveSphere(allSpheres, id), [allSpheres]);
+
+  /* результат считается по последнему списку из ref — проверка повторов и лимита не устаревает */
+  const customRef = useRef(customSpheres);
+  customRef.current = customSpheres;
+
+  const addSphere = useCallback((input: SphereInput): SphereResult => {
+    const result = createSphere(customRef.current, input);
+    if (result.ok) {
+      customRef.current = result.custom;
+      setCustomSpheres(result.custom);
+    }
+    return result;
+  }, []);
+
+  const editSphere = useCallback((id: string, input: SphereInput): SphereResult => {
+    const result = updateSphere(customRef.current, id, input);
+    if (result.ok) {
+      customRef.current = result.custom;
+      setCustomSpheres(result.custom);
+    }
+    return result;
+  }, []);
+
+  const removeSphere = useCallback(
+    (id: string): boolean => {
+      const next = deleteSphere({ custom: customRef.current, tasks, sections, sphereSlots }, id);
+      if (!next) return false;
+      customRef.current = next.custom;
+      setCustomSpheres(next.custom);
+      setTasks((prev) => prev.map((t) => t.sphere === id ? { ...t, sphere: 'other' } : t));
+      setSections((prev) => prev.map((sec) => sec.sphere === id ? { ...sec, sphere: 'other' } : sec));
+      setSphereSlots(next.sphereSlots);
+      return true;
+    },
+    [tasks, sections, sphereSlots]
   );
 
   const tasksForPeriod = useCallback(
@@ -528,12 +572,21 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     addHabit,
     saveJournal,
     getSphere,
+    customSpheres,
+    addSphere,
+    editSphere,
+    removeSphere,
     tasksForPeriod,
     syncStatus,
     logout
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+}
+
+/** контекст или null — для компонентов, которые могут оказаться вне AppProvider */
+export function useOptionalApp(): AppState | null {
+  return useContext(AppContext);
 }
 
 export function useApp(): AppState {

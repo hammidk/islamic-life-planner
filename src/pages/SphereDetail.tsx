@@ -9,7 +9,7 @@ import { SlotSheet } from '../components/sphere/SlotSheet';
 import { useApp } from '../contexts/AppContext';
 import { useInlineCreateHost, useQuickAdd } from '../contexts/QuickAddContext';
 import { InlineCreate } from '../components/task/InlineCreate';
-import { spheres } from '../data/appData';
+import { useSpheres } from '../hooks/useSpheres';
 import { compareOrder } from '../utils/taskOptions';
 import { formatDuration } from '../utils/prayer';
 import type { SphereId, Task } from '../types';
@@ -18,6 +18,7 @@ export function SphereDetail() {
   const { id } = useParams();
   const { tasks, goals, sections, addSection, addTask, updateTask, sphereSlots, setSphereSlot } = useApp();
   const { openQuickAdd } = useQuickAdd();
+  const { spheres } = useSpheres();
   useInlineCreateHost(id ? { sphere: id as SphereId } : {});
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});

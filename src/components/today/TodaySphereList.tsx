@@ -7,7 +7,7 @@ import { clickSuppressed } from '../../utils/dragState';
 import { DayTaskList } from '../DayTaskList';
 import { SphereIcon } from '../SphereIcon';
 import { useApp } from '../../contexts/AppContext';
-import { spheres } from '../../data/appData';
+import { useSpheres } from '../../hooks/useSpheres';
 import { fromMinutes } from '../../utils/prayer';
 import { usePersistentFlag } from '../../utils/localPrefs';
 import type { Task } from '../../types';
@@ -97,7 +97,8 @@ export function TodaySphereList({
   const [collapsed, toggle] = usePersistentFlag(`ilp.today.collapsed.${sphereId}`, false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLButtonElement>(null);
-  const sphere = spheres.find((s) => s.id === sphereId) ?? spheres[spheres.length - 1];
+  const { getSphere } = useSpheres();
+  const sphere = getSphere(sphereId);
   const surface = slot ? RIZQ_SLOT_SURFACE : 'bg-canvas';
   const draggable = movable && !slot;
   const { setNodeRef, setActivatorNodeRef, listeners, isDragging } = useDraggable({

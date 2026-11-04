@@ -1,10 +1,12 @@
 import React from 'react';
 import { Shell, SubHeader } from '../components/Shell';
 import { useApp } from '../contexts/AppContext';
-import { achievements, spheres } from '../data/appData';
+import { achievements } from '../data/appData';
+import { useSpheres } from '../hooks/useSpheres';
 
 export function Achievements() {
   const { goals } = useApp();
+  const { getSphere } = useSpheres();
 
   return (
     <Shell>
@@ -24,7 +26,7 @@ export function Achievements() {
 
         <div className="divide-y divide-line rounded-card border border-line bg-surface shadow-card">
           {goals.map((goal) => {
-            const sphere = spheres.find((s) => s.id === goal.sphere);
+            const sphere = getSphere(goal.sphere);
             return (
               <div key={goal.id} className="px-4 py-3.5">
                 <div className="flex items-baseline justify-between gap-3">

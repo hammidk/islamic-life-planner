@@ -2,7 +2,7 @@ import React from 'react';
 import { BottomSheet } from '../BottomSheet';
 import { SheetOption } from './SheetOption';
 import { SphereIcon } from '../SphereIcon';
-import { spheres } from '../../data/appData';
+import { useSpheres } from '../../hooks/useSpheres';
 import type { SphereId } from '../../types';
 
 interface SphereSheetProps {
@@ -13,6 +13,7 @@ interface SphereSheetProps {
 }
 
 export function SphereSheet({ open, value, onSelect, onClose }: SphereSheetProps) {
+  const { spheres } = useSpheres();
   return (
     <BottomSheet open={open} title="Сфера жизни" onClose={onClose}>
       <div className="-mx-3">

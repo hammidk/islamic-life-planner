@@ -3,7 +3,7 @@ import { SearchIcon } from 'lucide-react';
 import { SheetOption } from './SheetOption';
 import { SphereIcon } from '../SphereIcon';
 import { useApp } from '../../contexts/AppContext';
-import { spheres } from '../../data/appData';
+import { useSpheres } from '../../hooks/useSpheres';
 import { compareOrder } from '../../utils/taskOptions';
 import { parentCandidates } from '../../utils/taskTree';
 import type { Task } from '../../types';
@@ -20,6 +20,7 @@ interface ParentPickerProps {
 export function ParentPicker({ task, onPick }: ParentPickerProps) {
   const { tasks } = useApp();
   const [query, setQuery] = useState('');
+  const { spheres, getSphere } = useSpheres();
   const hasChildren = tasks.some((c) => c.parentId === task.id && c.status !== 'cancelled');
 
   if (hasChildren) {
@@ -35,7 +36,7 @@ export function ParentPicker({ task, onPick }: ParentPickerProps) {
   filter((p) => !q || p.title.toLowerCase().includes(q)).
   sort(compareOrder);
   const groups = spheres.
-  map((s) => ({ sphere: s, items: candidates.filter((p) => p.sphere === s.id) })).
+  map((s) => ({ sphere: s, items: candidates.filter((p) => getSphere(p.sphere).id === s.id) })).
   filter((g) => g.items.length > 0);
 
   return (

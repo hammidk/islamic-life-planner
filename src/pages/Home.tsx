@@ -10,7 +10,7 @@ import { WeekSwiper } from '../components/WeekSwiper';
 import { ProfileButton } from '../components/ProfileButton';
 import { useApp } from '../contexts/AppContext';
 import { useLive } from '../contexts/LiveDataContext';
-import { spheres } from '../data/appData';
+import { useSpheres } from '../hooks/useSpheres';
 import { fromMinutes } from '../utils/prayer';
 
 /** «1 дело», «3 дела», «5 дел» */
@@ -25,6 +25,7 @@ const tasksWord = (count: number): string => {
 export function Home() {
   const navigate = useNavigate();
   const { tasks } = useApp();
+  const { spheres, getSphere } = useSpheres();
   const { minutes, todayISO, todayFullLabel, hijriLabel, weather } = useLive();
 
   const open = tasks.filter((t) => t.status === 'open');
@@ -92,7 +93,7 @@ export function Home() {
         {/* ряд без переноса: следующая карточка видна справа как подсказка прокрутки */}
         <ul className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-px-5 px-5 pb-1">
           {spheres.map((sphere) => {
-            const count = open.filter((t) => t.sphere === sphere.id).length;
+            const count = open.filter((t) => getSphere(t.sphere).id === sphere.id).length;
             return (
               <li key={sphere.id} className="shrink-0 snap-start">
                 <button

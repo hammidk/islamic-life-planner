@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { Shell, SubHeader } from '../components/Shell';
 import { SectionBlock } from '../components/sphere/SectionBlock';
 import { useApp } from '../contexts/AppContext';
-import { spheres } from '../data/appData';
+import { useSpheres } from '../hooks/useSpheres';
 import { compareOrder } from '../utils/taskOptions';
 import { useInlineCreateHost } from '../contexts/QuickAddContext';
 import { InlineCreate } from '../components/task/InlineCreate';
@@ -12,6 +12,7 @@ import type { SphereId } from '../types';
 export function SectionDetail() {
   const { id, sectionId } = useParams();
   const { tasks, sections, addTask } = useApp();
+  const { spheres } = useSpheres();
   useInlineCreateHost(id && sectionId ? { sphere: id as SphereId, sectionId } : {});
 
   const sphere = spheres.find((s) => s.id === id);
