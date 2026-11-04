@@ -42,6 +42,10 @@ export interface ChecklistItem {
   id: string;
   title: string;
   done: boolean;
+  /** подпункт этого пункта (только у намазов; максимум два уровня) */
+  parentId?: string;
+  /** описание пункта */
+  note?: string;
 }
 
 export interface Task {

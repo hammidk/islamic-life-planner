@@ -1,5 +1,6 @@
-import { EditableChecklist } from './EditableChecklist';
+import { ChecklistEditor } from './checklist/ChecklistEditor';
 import { useApp } from '../contexts/AppContext';
+import type { ChecklistItem } from '../types';
 
 interface ChecklistProps {
   targetId: string;
@@ -7,19 +8,34 @@ interface ChecklistProps {
   suggestions?: string[];
   /** onPrimary — внутри зелёной карточки намаза */
   tone?: 'default' | 'onPrimary';
+  /** непрозрачный фон списка и строк */
+  surface?: string;
+  /** подпункты и описание — у пунктов намаза */
+  allowNesting?: boolean;
+  allowNote?: boolean;
 }
 
-/** Пункты дела или намаза: отметка, правка на месте, Enter — следующий пункт */
-export function Checklist({ targetId, suggestions = [], tone = 'default' }: ChecklistProps) {
-  const { checklists, addChecklistItem, toggleChecklistItem, renameChecklistItem, removeChecklistItem } = useApp();
+const newId = () => `c${Date.now()}${Math.random().toString(36).slice(2, 7)}`;
+
+/** Пункты дела или намаза: данные из контекста, поведение — ChecklistEditor */
+export function Checklist({
+  targetId,
+  suggestions = [],
+  tone = 'default',
+  surface,
+  allowNesting = false,
+  allowNote = false
+}: ChecklistProps) {
+  const { checklists, updateChecklist } = useApp();
   return (
-    <EditableChecklist
+    <ChecklistEditor<ChecklistItem>
       items={checklists[targetId] ?? []}
-      onToggle={(id) => toggleChecklistItem(targetId, id)}
-      onRename={(id, title) => renameChecklistItem(targetId, id, title)}
-      onRemove={(id) => removeChecklistItem(targetId, id)}
-      onInsert={(title, afterId) => addChecklistItem(targetId, title, afterId)}
+      update={(fn) => updateChecklist(targetId, fn)}
+      create={(title) => ({ id: newId(), title, done: false })}
       tone={tone}
+      surface={surface}
+      allowNesting={allowNesting}
+      allowNote={allowNote}
       suggestions={suggestions} />);
 
 

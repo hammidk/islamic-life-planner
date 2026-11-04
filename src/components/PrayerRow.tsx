@@ -91,7 +91,14 @@ export function PrayerRow({ id, name, time, hint, isCurrent = false, isLate = fa
       </div>
       {open ?
       <div className="mt-2 pl-[34px]">
-          <Checklist targetId={id} suggestions={prayerChecklistSuggestions} tone="onPrimary" />
+          <Checklist
+          targetId={id}
+          suggestions={prayerChecklistSuggestions}
+          tone="onPrimary"
+          // непрозрачный цвет карточки с белым 10% — строки закрывают слой действий свайпа
+          surface={isLate ? 'bg-[#BC574E]' : 'bg-[#356A57]'}
+          allowNesting
+          allowNote /> 
         </div> :
       null}
     </div>);

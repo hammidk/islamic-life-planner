@@ -145,7 +145,7 @@ export function TaskItem({ task, look, drag, completing, onToggle, onMenu, onInd
       </SwipeRow>
       {look.checklist && open ?
       <div className="pb-3 pl-[35px]">
-          <Checklist targetId={task.id} />
+          <Checklist targetId={task.id} surface={look.surface === 'bg-canvas' ? 'bg-canvas' : 'bg-[#F0F1F1]'} />
         </div> :
       null}
     </div>);

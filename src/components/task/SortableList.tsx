@@ -63,6 +63,11 @@ interface SortableListProps<T> {
   canNest?: (item: T, parent: T) => boolean;
   onNest?: (item: T, parent: T) => void;
   className?: string;
+  /**
+   * Не перетаскиваемый элемент после строки afterId (null — в начале), например поле нового
+   * пункта. Ключ постоянный: при вставке строк перед ним поле не пересоздаётся и не теряет фокус.
+   */
+  extra?: {afterId: string | null;key: string;node: React.ReactNode;} | null;
 }
 
 function SortableRow({
@@ -113,7 +118,8 @@ export function SortableList<T>({
   onMenu,
   canNest,
   onNest,
-  className
+  className,
+  extra
 }: SortableListProps<T>) {
   const sensors = useDragSensors();
   const ids = items.map(getId);
@@ -174,18 +180,25 @@ export function SortableList<T>({
       
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
         <div className={className}>
-          {items.map((item, index) =>
-          <SortableRow
-            key={getId(item)}
-            id={getId(item)}
-            index={index}
-            activeIndex={activeIndex}
-            overIndex={overIndex}
-            nestIndex={nestIndex}>
-            
-              {(drag) => renderItem(item, drag)}
-            </SortableRow>
-          )}
+          {(() => {
+            const rows: React.ReactNode[] = items.map((item, index) =>
+            <SortableRow
+              key={getId(item)}
+              id={getId(item)}
+              index={index}
+              activeIndex={activeIndex}
+              overIndex={overIndex}
+              nestIndex={nestIndex}>
+              
+                {(drag) => renderItem(item, drag)}
+              </SortableRow>
+            );
+            if (extra) {
+              const at = extra.afterId === null ? 0 : ids.indexOf(extra.afterId) + 1;
+              if (extra.afterId === null || at > 0) rows.splice(at, 0, <div key={extra.key}>{extra.node}</div>);
+            }
+            return rows;
+          })()}
         </div>
       </SortableContext>
       {createPortal(
