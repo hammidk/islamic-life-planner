@@ -5,7 +5,7 @@ import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { useDragSensors } from '../task/SortableList';
 import { SphereIcon } from '../SphereIcon';
-import { spheres } from '../../data/appData';
+import { useSpheres } from '../../hooks/useSpheres';
 import { placementFromPoint } from '../../utils/blockPlacement';
 import type { BlockSpot, MovableBlock } from '../../utils/blockPlacement';
 import { STILL_DISTANCE } from '../../utils/dragDrop';
@@ -32,6 +32,7 @@ const clientY = (e: Event | null): number | null => {
  */
 export function BlockDragLayer({ children, onDrop }: BlockDragLayerProps) {
   const sensors = useDragSensors();
+  const { getSphere } = useSpheres();
   const rootRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<MovableBlock | null>(null);
   const [line, setLine] = useState<{y: number;left: number;width: number;} | null>(null);
@@ -106,7 +107,7 @@ export function BlockDragLayer({ children, onDrop }: BlockDragLayerProps) {
     onDrop(sphere, target);
   };
 
-  const sphere = active ? spheres.find((s) => s.id === active) : null;
+  const sphere = active ? getSphere(active) : null;
 
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={reset}>

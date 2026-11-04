@@ -2,7 +2,7 @@ import React from 'react';
 import { CheckIcon } from 'lucide-react';
 import { SphereIcon } from './SphereIcon';
 import { useApp } from '../contexts/AppContext';
-import { spheres } from '../data/appData';
+import { useSpheres } from '../hooks/useSpheres';
 import { formatRowMeta, formatTimePrefix } from '../utils/taskOptions';
 import type { Task } from '../types';
 
@@ -40,9 +40,10 @@ export function TaskRow({
   const inactive = task.status === 'cancelled';
   const note = task.description?.split('\n').find((line) => line.trim())?.trim();
   const prefix = showPrefix ? formatTimePrefix(task) : null;
-  const ownSphere = spheres.find((s) => s.id === task.sphere) ?? spheres[spheres.length - 1];
-  const meta = formatRowMeta(task, { showDate, withSphere: !sphereColor, withDuration: durationInMeta });
-  const sphere = sphereColor ? spheres.find((s) => s.id === task.sphere) ?? spheres[spheres.length - 1] : null;
+  const { getSphere } = useSpheres();
+  const ownSphere = getSphere(task.sphere);
+  const meta = formatRowMeta(task, { showDate, withSphere: !sphereColor, withDuration: durationInMeta, sphereName: ownSphere.name });
+  const sphere = sphereColor ? ownSphere : null;
 
   return (
     <div className="flex min-w-0 items-center gap-3 py-3">

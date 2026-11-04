@@ -11,7 +11,6 @@ import {
 'date-fns';
 import { ru } from 'date-fns/locale';
 import { todayISO } from './prayer';
-import { spheres } from '../data/appData';
 import type { Reminder, RepeatRule, Task } from '../types';
 
 /** Ручной порядок внутри списка */
@@ -108,11 +107,11 @@ export function formatTimePrefix(task: Task): string | null {
  */
 export function formatRowMeta(
 task: Task,
-options: {showDate?: boolean;withSphere?: boolean;withDuration?: boolean;} = {})
+options: {showDate?: boolean;withSphere?: boolean;withDuration?: boolean;sphereName?: string;} = {})
 : string {
   const showDate = options.showDate ?? true;
   const withSphere = options.withSphere ?? true;
-  const sphereName = spheres.find((s) => s.id === task.sphere)?.name ?? 'Прочее';
+  const sphereName = options.sphereName ?? 'Прочее';
   const d = safeParseISO(task.date);
   const parts: string[] = [];
   if (d) {

@@ -65,14 +65,23 @@ export function rangeBounds(range: StatsRange, today: string): {from: string;to:
 }
 
 /** Статистика задач периода по дате задачи */
-export function computeTaskStats(tasks: Task[], range: StatsRange, today: string): TaskStatsSummary {
+export function computeTaskStats(
+tasks: Task[],
+range: StatsRange,
+today: string,
+/** id сферы для подсчёта: удалённая сфера считается в «Прочее» */
+sphereOf: (id: string) => string = (id) => id)
+: TaskStatsSummary {
   const { from, to, buckets } = rangeBounds(range, today);
   const inRange = tasks.filter((t) => t.date && t.date >= from && t.date <= to);
   const notCancelled = inRange.filter((t) => t.status !== 'cancelled');
   const done = inRange.filter((t) => t.status === 'done');
 
   const sphereMap = new Map<SphereId, number>();
-  done.forEach((t) => sphereMap.set(t.sphere, (sphereMap.get(t.sphere) ?? 0) + minutesOf(t)));
+  done.forEach((t) => {
+    const id = sphereOf(t.sphere);
+    sphereMap.set(id, (sphereMap.get(id) ?? 0) + minutesOf(t));
+  });
 
   return {
     done: done.length,

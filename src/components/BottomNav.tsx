@@ -4,6 +4,7 @@ import { BookOpenIcon, HomeIcon, PlusIcon } from 'lucide-react';
 import { useQuickAdd } from '../contexts/QuickAddContext';
 import type { TaskDraft } from '../contexts/TaskDraftContext';
 import type { SphereId } from '../types';
+import { useSpheres } from '../hooks/useSpheres';
 
 interface NavItem {
   to: string;
@@ -29,12 +30,10 @@ const journalItem: NavItem = {
 };
 
 
-const sphereIds: SphereId[] = ['faith', 'rizq', 'health', 'family', 'ideas', 'other'];
-
 /** Пресет новой задачи по текущему экрану: дата — только на экране конкретного дня */
-function presetFor(pathname: string): Partial<TaskDraft> {
+function presetFor(pathname: string, sphereIds: string[]): Partial<TaskDraft> {
   const sphere = pathname.match(/^\/sphere\/([^/]+)/)?.[1];
-  if (sphere && (sphereIds as string[]).includes(sphere)) return { sphere: sphere as SphereId };
+  if (sphere && sphereIds.includes(sphere)) return { sphere: sphere as SphereId };
   const day = pathname.match(/^\/day\/(\d{4}-\d{2}-\d{2})/)?.[1];
   if (day) return { date: day };
   return {};
@@ -43,6 +42,7 @@ function presetFor(pathname: string): Partial<TaskDraft> {
 export function BottomNav() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { spheres } = useSpheres();
   const { openQuickAdd } = useQuickAdd();
 
   const renderItem = (item: NavItem) => {
@@ -84,7 +84,7 @@ export function BottomNav() {
 
         <button
           type="button"
-          onClick={() => openQuickAdd(presetFor(pathname))}
+          onClick={() => openQuickAdd(presetFor(pathname, spheres.map((s) => s.id)))}
           aria-label="Создать задачу"
           className="mx-1 flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-[0_6px_16px_rgba(31,90,68,0.32)] transition-transform duration-150 ease-out active:scale-95">
           

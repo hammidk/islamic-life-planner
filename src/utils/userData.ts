@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import type {
   ChecklistItem,
+  CustomSphere,
   Goal,
   Habit,
   JournalEntry,
@@ -12,6 +13,7 @@ import type {
 import { prunePlacement } from './blockPlacement';
 import type { BlockPlacement } from './blockPlacement';
 import { todayISO } from './prayer';
+import { normalizeCustomSpheres } from './spheres';
 
 /** Всё, что принадлежит пользователю и сохраняется в облаке */
 export interface UserSnapshot {
@@ -27,6 +29,8 @@ export interface UserSnapshot {
   sphereSlots: Partial<Record<SphereId, SphereSlot>>;
   /** перенесённые на «Сегодня» блоки «Удел»/«Прочее» по датам; в старых снимках поля нет */
   blockPlacement?: BlockPlacement;
+  /** сферы, созданные пользователем; в старых снимках поля нет */
+  customSpheres?: CustomSphere[];
 }
 
 interface StoredSnapshot {
@@ -135,7 +139,8 @@ export function normalize(raw: unknown): UserSnapshot | null {
     {},
     sphereSlots: normalizeSlots(raw.sphereSlots),
     // действует только сегодня; записи старше 7 дней чистятся
-    blockPlacement: prunePlacement(raw.blockPlacement, todayISO())
+    blockPlacement: prunePlacement(raw.blockPlacement, todayISO()),
+    customSpheres: normalizeCustomSpheres(raw.customSpheres)
   };
 }
 

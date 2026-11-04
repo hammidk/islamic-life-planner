@@ -14,7 +14,7 @@ import { SheetOption } from './SheetOption';
 import { BottomSheet } from '../BottomSheet';
 import { SphereIcon } from '../SphereIcon';
 import { useApp } from '../../contexts/AppContext';
-import { spheres } from '../../data/appData';
+import { useSpheres } from '../../hooks/useSpheres';
 import { formatReminder, formatRepeat, formatTaskDate } from '../../utils/taskOptions';
 import type { Reminder, RepeatRule, SphereId } from '../../types';
 
@@ -87,7 +87,8 @@ export function TaskDetailForm({ fields, onChange, checklist, checklistCount }: 
   const { sections } = useApp();
   const [sheet, setSheet] = useState<SheetKind>(null);
   const [sectionSheet, setSectionSheet] = useState(false);
-  const sphere = spheres.find((s) => s.id === fields.sphere) ?? spheres[spheres.length - 1];
+  const { getSphere } = useSpheres();
+  const sphere = getSphere(fields.sphere);
   const ownSections = sections.filter((s) => s.sphere === fields.sphere);
   const section = ownSections.find((s) => s.id === fields.sectionId);
   const iconClass = 'h-[17px] w-[17px]';

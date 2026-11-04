@@ -5,18 +5,8 @@ import type {
   JournalEntry,
   Period,
   Prayer,
-  Sphere,
   Task } from
 '../types';
-
-export const spheres: Sphere[] = [
-{ id: 'faith', name: 'Вера', color: '#2F6B52' },
-{ id: 'rizq', name: 'Удел', color: '#6E6AA6' },
-{ id: 'health', name: 'Здоровье', color: '#3F7C8C' },
-{ id: 'family', name: 'Семья', color: '#B05F4E' },
-{ id: 'ideas', name: 'Идеи и Цели', color: '#A07A2E' },
-{ id: 'other', name: 'Прочее', color: '#8A8F8B' }];
-
 
 export type ObligatoryPrayerId = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
 

@@ -18,7 +18,7 @@ import { SphereIcon } from '../SphereIcon';
 import { useApp } from '../../contexts/AppContext';
 import { useTaskDelete } from '../../hooks/useTaskDelete';
 import { useTaskTree } from '../../hooks/useTaskTree';
-import { spheres } from '../../data/appData';
+import { useSpheres } from '../../hooks/useSpheres';
 import { formatTaskDate, quickDates } from '../../utils/taskOptions';
 import type { Task } from '../../types';
 
@@ -70,6 +70,7 @@ export function TaskActionSheet({ task, onClose }: TaskActionSheetProps) {
   const remove = useTaskDelete();
   const { outdentTask, moveTaskUnder } = useTaskTree();
   const [view, setView] = useState<View>('main');
+  const { spheres, getSphere } = useSpheres();
 
   useEffect(() => {
     if (task) setView('main');
@@ -91,7 +92,7 @@ export function TaskActionSheet({ task, onClose }: TaskActionSheetProps) {
 
 
   const renderMain = (t: Task) => {
-    const sphere = spheres.find((s) => s.id === t.sphere);
+    const sphere = getSphere(t.sphere);
     return (
       <>
         <div className="grid grid-cols-2 gap-2">
@@ -216,8 +217,8 @@ export function TaskActionSheet({ task, onClose }: TaskActionSheetProps) {
       {back}
       <div className="-mx-3">
         {spheres.map((s) => {
-        // у «Прочее» разделов нет
-        const own = s.id === 'other' ? [] : sections.filter((sec) => sec.sphere === s.id);
+        // у «Прочее» своих разделов нет, но разделы удалённых сфер переезжают в него
+        const own = sections.filter((sec) => sec.sphere === s.id);
         const move = (sectionId?: string) => {
           updateTask(t.id, { sphere: s.id, sectionId, parentId: undefined });
           // подзадачи переезжают вместе с задачей

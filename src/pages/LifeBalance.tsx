@@ -3,17 +3,17 @@ import { Shell, SubHeader } from '../components/Shell';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { useApp } from '../contexts/AppContext';
 import { useLive } from '../contexts/LiveDataContext';
-import { spheres } from '../data/appData';
+import { useSpheres } from '../hooks/useSpheres';
 import { computeTaskStats } from '../utils/stats';
 import type { StatsRange } from '../utils/stats';
-
-const visible = spheres.filter((s) => s.id !== 'other');
 
 export function LifeBalance() {
   const { tasks } = useApp();
   const { todayISO } = useLive();
   const [range, setRange] = useState<StatsRange>('week');
-  const stats = computeTaskStats(tasks, range, todayISO);
+  const { spheres, getSphere } = useSpheres();
+  const visible = spheres.filter((s) => s.id !== 'other');
+  const stats = computeTaskStats(tasks, range, todayISO, (id) => getSphere(id).id);
   /** часы по сферам из выполненных дел периода */
   const hoursOf = (id: string) => {
     const minutes = stats.bySphere.find((d) => d.id === id)?.minutes ?? 0;
