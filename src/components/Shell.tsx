@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronLeftIcon } from 'lucide-react';
 import { BottomNav } from './BottomNav';
 import { useBack } from '../hooks/useBack';
+import { ToastHost } from './ui/ToastHost';
 
 interface ShellProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ export function Shell({ children, nav = false }: ShellProps) {
     <div className="mx-auto flex min-h-screen w-full min-w-0 max-w-[430px] flex-col bg-canvas supports-[height:100dvh]:min-h-[100dvh]">
       <main className={`min-w-0 flex-1 px-5 pt-3 ${nav ? 'pb-[calc(8rem+env(safe-area-inset-bottom))]' : 'pb-10'}`}>{children}</main>
       {nav ? <BottomNav /> : null}
+      <ToastHost />
     </div>);
 
 }

@@ -1,97 +1,9 @@
-import React, { useState } from 'react';
-import { ChevronDownIcon } from 'lucide-react';
-import type { DragControls } from 'framer-motion';
-import { TaskRow } from './TaskRow';
-import { Checklist } from './Checklist';
-import { GestureTaskRow } from './task/GestureTaskRow';
+import { useState } from 'react';
 import { ReorderableList } from './task/ReorderableList';
-import { DragHandle } from './task/DragHandle';
 import { TaskActionSheet } from './task/TaskActionSheet';
-import { InlineEdit } from './task/InlineEdit';
+import { TaskItem } from './task/TaskItem';
 import { useApp } from '../contexts/AppContext';
-import { useQuickAdd } from '../contexts/QuickAddContext';
 import type { Task } from '../types';
-
-interface TaskItemProps {
-  task: Task;
-  surface: string;
-  controls?: DragControls;
-  completing: boolean;
-  showDate: boolean;
-  sphereColor: boolean;
-  onToggle: (task: Task) => void;
-  onMenu: (task: Task) => void;
-}
-
-function TaskWithChecklist({
-  task,
-  surface,
-  controls,
-  completing,
-  showDate,
-  sphereColor,
-  onToggle,
-  onMenu
-}: TaskItemProps) {
-  const { checklists, deleteTask } = useApp();
-  const { editingId, startEdit } = useQuickAdd();
-  const [open, setOpen] = useState(false);
-
-  const items = checklists[task.id] ?? [];
-  const doneItems = items.filter((i) => i.done).length;
-
-  if (editingId === task.id) return <InlineEdit task={task} />;
-
-  return (
-    <div>
-      <GestureTaskRow
-        surface={surface}
-        label={task.title}
-        onLongPress={() => onMenu(task)}
-        onDelete={() => deleteTask(task.id)}>
-        
-        <TaskRow
-          task={task}
-          showDate={showDate}
-          sphereColor={sphereColor}
-          checked={completing || undefined}
-          onToggle={() => onToggle(task)}
-          onOpen={(t) => startEdit(t.id)}
-          right={
-          <span className="flex shrink-0 items-center">
-              <button
-              type="button"
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-              aria-label={open ? 'Скрыть пункты' : 'Показать пункты'}
-              className="flex shrink-0 items-center gap-1 rounded-full px-1.5 py-1 text-[12px] text-muted transition-colors duration-150 ease-out hover:bg-surface">
-              
-                {items.length > 0 ?
-              <span className="tabular-nums">
-                    {doneItems}/{items.length}
-                  </span> :
-              null}
-                <ChevronDownIcon
-                className={`h-4 w-4 transition-transform duration-200 ease-out ${
-                open ? 'rotate-180' : ''}`
-                }
-                strokeWidth={1.8}
-                aria-hidden="true" />
-              
-              </button>
-              {controls ? <DragHandle controls={controls} label={task.title} /> : null}
-            </span>
-          } />
-        
-      </GestureTaskRow>
-      {open ?
-      <div className="pb-3 pl-[35px]">
-          <Checklist targetId={task.id} />
-        </div> :
-      null}
-    </div>);
-
-}
 
 interface DayTaskListProps {
   tasks: Task[];
@@ -142,12 +54,10 @@ export function DayTaskList({
         itemClassName={surface}
         onReorder={reorderTasks}
         renderItem={(task, controls) =>
-        <TaskWithChecklist
+        <TaskItem
           task={task}
-          surface={surface}
+          look={{ surface, showDate, sphereColor, checklist: true }}
           controls={controls}
-          showDate={showDate}
-          sphereColor={sphereColor}
           completing={completing.includes(task.id)}
           onToggle={handleToggle}
           onMenu={setMenuTask} />

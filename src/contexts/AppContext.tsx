@@ -68,6 +68,8 @@ interface AppState {
   updateTask: (id: string, patch: Partial<Omit<Task, 'id'>>) => void;
   /** удаляет задачу вместе с её подзадачами */
   deleteTask: (id: string) => void;
+  /** возвращает удалённые дела (отмена удаления) */
+  restoreTasks: (list: Task[]) => void;
   /** сохраняет ручной порядок: ids в новом порядке */
   reorderTasks: (ids: string[]) => void;
   toggleTask: (id: string) => void;
@@ -386,6 +388,13 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     });
   }, []);
 
+  const restoreTasks = useCallback((list: Task[]) => {
+    setTasks((prev) => {
+      const ids = new Set(prev.map((t) => t.id));
+      return [...prev, ...list.filter((t) => !ids.has(t.id))];
+    });
+  }, []);
+
   const reorderTasks = useCallback((ids: string[]) => {
     setTasks((prev) =>
     prev.map((t) => {
@@ -473,6 +482,7 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     addSection,
     updateTask,
     deleteTask,
+    restoreTasks,
     reorderTasks,
     toggleTask,
     checklists,
