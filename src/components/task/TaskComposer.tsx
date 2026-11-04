@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { CalendarIcon, InfoIcon, MoonStarIcon, Repeat2Icon, TimerIcon } from 'lucide-react';
+import { CalendarIcon, InfoIcon, Repeat2Icon, TimerIcon } from 'lucide-react';
 import { SphereIcon } from '../SphereIcon';
 import { PopoverMenu } from '../ui/PopoverMenu';
 import { DateTimeScreen } from './DateTimeScreen';
@@ -42,8 +42,11 @@ interface TaskComposerProps {
   placeholder?: string;
   /** кружок слева: для существующего дела — его состояние */
   done?: boolean;
-  /** неснимаемый чип первым в ряду: «К намазу: Аср» */
-  lockedChip?: string;
+  /**
+   * prayer — внутри блока намаза: без рамки, белый текст, чипы — прозрачные пилюли
+   * bg-white/15 и появляются при фокусе. Состав чипов тот же, кроме сферы (она — в «Подробно»)
+   */
+  variant?: 'default' | 'prayer';
 }
 
 /** Чип — только иконка; выбранное значение показывается текстом рядом */
@@ -54,7 +57,8 @@ function Chip({
   ariaLabel,
   active,
   onClick,
-  chipRef
+  chipRef,
+  prayer = false
 
 
 
@@ -64,7 +68,8 @@ function Chip({
 
 
 
-}: {icon: React.ReactNode;label: string;value?: string;ariaLabel?: string;active: boolean;onClick: () => void;chipRef?: React.Ref<HTMLButtonElement>;}) {
+
+}: {icon: React.ReactNode;label: string;value?: string;ariaLabel?: string;active: boolean;onClick: () => void;chipRef?: React.Ref<HTMLButtonElement>;prayer?: boolean;}) {
   return (
     <button
       ref={chipRef}
@@ -73,6 +78,8 @@ function Chip({
       aria-label={ariaLabel ?? (value ? `${label}: ${value}` : label)}
       className={`flex h-[34px] min-w-[34px] shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border text-[13px] transition-colors duration-150 ease-out ${
       value ? 'px-3' : 'px-2.5'} ${
+      prayer ?
+      `border-transparent text-white ${active ? 'bg-white/25' : 'bg-white/15 hover:bg-white/20'}` :
       active ? 'border-primary/40 bg-primary-tint text-primary' : 'border-line text-ink-soft hover:bg-canvas'}`
       }>
 
@@ -97,8 +104,11 @@ export function TaskComposer({
   autoFocus = true,
   placeholder = 'Новое дело',
   done = false,
-  lockedChip
+  variant = 'default'
 }: TaskComposerProps) {
+  const prayer = variant === 'prayer';
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [focused, setFocused] = useState(false);
   const [sheet, setSheet] = useState<SheetKind>(null);
   const [dateMenu, setDateMenu] = useState(false);
   const [repeatMenu, setRepeatMenu] = useState(false);
@@ -144,24 +154,39 @@ export function TaskComposer({
   };
 
   const dateLine = value.date ? formatDateLine(value.date, value.time || undefined) : '';
+  /** в блоке намаза чипы видны, пока карточка в фокусе или открыто её меню */
+  const chipsVisible = !prayer || focused || dateMenu || repeatMenu || sheet !== null;
+  const indent = prayer ? 'pl-[38px]' : 'pl-[34px]';
 
   return (
-    <div>
+    <div
+      ref={rootRef}
+      onFocus={() => setFocused(true)}
+      onBlur={(e) => {
+        if (!rootRef.current?.contains(e.relatedTarget as Node | null)) setFocused(false);
+      }}>
       {dateLine ?
       <button
         type="button"
         onClick={() => setSheet('datetime')}
-        className="mb-1 pl-[34px] text-left text-[13.5px] font-medium text-primary">
+        className={`mb-1 text-left text-[13.5px] font-medium ${indent} ${prayer ? 'text-white/80' : 'text-primary'}`}>
 
           {dateLine}
           {value.urgent ? <span className="text-[#D93B30]"> · !</span> : null}
         </button> :
       null}
 
-      <div className="flex items-center gap-3">
+      <div className={`flex items-center ${prayer ? 'gap-1' : 'gap-3'}`}>
+        {prayer ?
+        // как у строк блока: квадрат 17px в области 44px
+        <span className="-ml-2.5 flex h-11 w-11 shrink-0 items-center justify-center" aria-hidden="true">
+            <span className="h-[17px] w-[17px] rounded-[5px] border border-white/60" />
+          </span> :
+
         <span
           className={`h-[22px] w-[22px] shrink-0 rounded-full border ${done ? 'border-primary bg-primary' : 'border-[#CBD2C9]'}`}
           aria-hidden="true" />
+        }
 
         <input
           ref={inputRef}
@@ -177,13 +202,17 @@ export function TaskComposer({
           placeholder={placeholder}
           aria-label="Название"
           enterKeyHint="next"
-          className="min-w-0 flex-1 bg-transparent text-[17px] text-ink placeholder:text-muted/80 focus:outline-none" />
+          className={`min-w-0 flex-1 bg-transparent focus:outline-none ${
+          prayer ? 'text-[16px] text-white placeholder:text-white/50' : 'text-[17px] text-ink placeholder:text-muted/80'}`
+          } />
 
         <button
           type="button"
           onClick={onExpand}
           aria-label="Подробно"
-          className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-150 ease-out hover:bg-canvas hover:text-primary">
+          className={`-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-150 ease-out ${
+          prayer ? 'text-white/70 hover:bg-white/10 hover:text-white' : 'text-muted hover:bg-canvas hover:text-primary'}`
+          }>
 
           <InfoIcon className="h-[19px] w-[19px]" strokeWidth={1.8} aria-hidden="true" />
         </button>
@@ -200,24 +229,20 @@ export function TaskComposer({
         }}
         placeholder="Заметка"
         aria-label="Заметка"
-        className="mt-1 w-full bg-transparent pl-[34px] text-[16px] text-ink-soft placeholder:text-muted/70 focus:outline-none" />
+        className={`mt-1 w-full bg-transparent text-[16px] focus:outline-none ${indent} ${
+        prayer ? 'text-white/70 placeholder:text-white/40' : 'text-ink-soft placeholder:text-muted/70'}`
+        } />
 
 
-      <div className="no-scrollbar -mx-1 mt-3 flex flex-nowrap gap-2 overflow-x-auto px-1 pl-[34px]">
-        {lockedChip ?
-        <span
-          className="flex h-[34px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-primary/40 bg-primary-tint px-3 text-[13px] text-primary">
-          
-            <MoonStarIcon className={iconClass} strokeWidth={1.9} aria-hidden="true" />
-            {lockedChip}
-          </span> :
-        null}
+      {chipsVisible ?
+      <div className={`no-scrollbar -mx-1 mt-3 flex flex-nowrap gap-2 overflow-x-auto px-1 ${indent} ${prayer ? 'pb-2' : ''}`}>
         <Chip
           chipRef={dateChipRef}
           icon={<CalendarIcon className={iconClass} strokeWidth={1.9} aria-hidden="true" />}
           label="Дата"
           value={value.date ? formatDateLine(value.date, value.time || undefined) : undefined}
           active={Boolean(value.date)}
+          prayer={prayer}
           onClick={() => setDateMenu(true)} />
 
         <Chip
@@ -226,6 +251,7 @@ export function TaskComposer({
           label="Повтор"
           value={hasRepeat ? repeatLabel(value.repeat) : undefined}
           active={hasRepeat}
+          prayer={prayer}
           onClick={() => setRepeatMenu(true)} />
 
         <Chip
@@ -233,8 +259,11 @@ export function TaskComposer({
           label="Длительность"
           value={value.duration ? `${value.duration} мин` : undefined}
           active={Boolean(value.duration)}
+          prayer={prayer}
           onClick={() => setSheet('duration')} />
 
+        {prayer ?
+        null :
         <Chip
           icon={<SphereIcon id={sphere.id} color={sphere.color} className={iconClass} />}
           label="Сфера"
@@ -242,8 +271,9 @@ export function TaskComposer({
           value={sphere.id !== 'other' ? sphere.name : undefined}
           active={false}
           onClick={() => setSheet('sphere')} />
-
-      </div>
+        }
+      </div> :
+      null}
 
       <PopoverMenu
         open={dateMenu}

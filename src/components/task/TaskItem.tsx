@@ -28,6 +28,8 @@ export interface TaskItemLook {
   hidePrayer?: boolean;
   /** кнопка «Переместить в раздел»; null — разделов нет */
   onMove?: ((task: Task) => void) | null;
+  /** prayer — внутри блока намаза: белый текст в цвет блока (см. TaskRow) */
+  variant?: 'default' | 'prayer';
 }
 
 interface TaskItemProps {
@@ -94,12 +96,13 @@ export function TaskItem({ task, look, drag, completing, onToggle, onMenu, onInd
         confirmDelete={hasChildren}
         onIndent={onIndent}
         onOutdent={onOutdent}
+        variant={look.variant}
         dragListeners={drag?.dragListeners}
         dragging={drag?.isDragging}
         nestTarget={drag?.nestTarget}>
 
         {parentTitle ?
-        <p className="-mb-2.5 truncate pl-[35px] pt-2 text-[11.5px] text-muted">↳ {parentTitle}</p> :
+        <p className={`-mb-2.5 truncate pl-[35px] pt-2 text-[11.5px] ${look.variant === 'prayer' ? 'text-white/70' : 'text-muted'}`}>↳ {parentTitle}</p> :
         null}
         <TaskRow
           task={task}
@@ -109,6 +112,7 @@ export function TaskItem({ task, look, drag, completing, onToggle, onMenu, onInd
           durationInMeta={look.durationInMeta}
           day={day}
           hidePrayer={look.hidePrayer}
+          variant={look.variant}
           checked={completing || undefined}
           onToggle={onToggle ? () => onToggle(task) : undefined}
           onOpen={(t) => startEdit(t.id)}

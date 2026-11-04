@@ -9,11 +9,11 @@ import { useOutsideTap } from '../../hooks/useOutsideTap';
  * Enter создаёт дело и открывает новую пустую карточку с тем же контекстом;
  * тап вне карточки создаёт дело (если есть название) и закрывает её.
  */
-export function InlineCreate({ slot = 'page', lockedChip }: {
+export function InlineCreate({ slot = 'page', variant = 'default' }: {
   /** место карточки: 'page' — вверху списка экрана, иначе — там, где стоит этот InlineCreate */
   slot?: string;
-  /** неснимаемый чип, например «К намазу: Аср» */
-  lockedChip?: string;
+  /** prayer — поле наверху списка блока намаза, без рамки, в цвет блока */
+  variant?: 'default' | 'prayer';
 } = {}) {
   const { mode, inlineSlot, commitInline, closeInline, expandDraft } = useQuickAdd();
   const { draft, updateDraft } = useTaskDraft();
@@ -40,7 +40,7 @@ export function InlineCreate({ slot = 'page', lockedChip }: {
   return (
     <div
       ref={rootRef}
-      className="mb-3 rounded-card border border-primary/30 bg-surface px-4 py-3 shadow-card">
+      className={variant === 'prayer' ? 'mb-1' : 'mb-3 rounded-card border border-primary/30 bg-surface px-4 py-3 shadow-card'}>
       
       <TaskComposer
         inputRef={inputRef}
@@ -55,7 +55,8 @@ export function InlineCreate({ slot = 'page', lockedChip }: {
           repeat: draft.repeat,
           reminder: draft.reminder
         }}
-        lockedChip={lockedChip}
+        variant={variant}
+        placeholder={variant === 'prayer' ? 'Новый пункт' : undefined}
         onChange={(patch) => updateDraft(patch)}
         onSubmit={() => {
           // пустое название: ничего не создаём, карточка и клавиатура остаются
