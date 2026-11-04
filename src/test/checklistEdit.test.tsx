@@ -60,7 +60,8 @@ describe('правка подпунктов на месте', () => {
     await user.click(screen.getByRole('button', { name: 'Отметить: Пункт А' }));
     expect(appState.checklists[task.id][0].done).toBe(true);
     expect(screen.queryByRole('textbox', { name: 'Пункт' })).toBeNull();
-    const row = screen.getByRole('button', { name: 'Пункт А' }).closest('li')!;
+    // строка пункта — не ниже 44px
+    const row = screen.getByRole('button', { name: 'Пункт А' }).parentElement!;
     expect(row.className).toContain('min-h-[44px]');
   });
 

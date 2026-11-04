@@ -81,6 +81,8 @@ interface AppState {
   toggleChecklistItem: (targetId: string, itemId: string) => void;
   renameChecklistItem: (targetId: string, itemId: string, title: string) => void;
   removeChecklistItem: (targetId: string, itemId: string) => void;
+  /** любое изменение списка пунктов (вложенность, порядок, описание) */
+  updateChecklist: (targetId: string, fn: (items: ChecklistItem[]) => ChecklistItem[]) => void;
   /** время сфер в ежедневном расписании */
   sphereSlots: Partial<Record<SphereId, SphereSlot>>;
   /** null — убрать сферу из расписания */
@@ -352,6 +354,10 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     }));
   }, []);
 
+  const updateChecklist = useCallback((targetId: string, fn: (items: ChecklistItem[]) => ChecklistItem[]) => {
+    setChecklists((prev) => ({ ...prev, [targetId]: fn(prev[targetId] ?? []) }));
+  }, []);
+
   const toggleChecklistItem = useCallback((targetId: string, itemId: string) => {
     setChecklists((prev) => ({
       ...prev,
@@ -509,6 +515,7 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     toggleChecklistItem,
     renameChecklistItem,
     removeChecklistItem,
+    updateChecklist,
     sphereSlots,
     setSphereSlot,
     blockPlacement,
