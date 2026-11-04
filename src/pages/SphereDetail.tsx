@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { ChevronRightIcon, ClockIcon, FolderPlusIcon, PlusIcon } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ChevronRightIcon, ClockIcon, FolderPlusIcon, MoreHorizontalIcon, PlusIcon } from 'lucide-react';
 import { Shell, SubHeader } from '../components/Shell';
 import { BottomSheet } from '../components/BottomSheet';
 import { SheetOption } from '../components/task/SheetOption';
 import { SectionBlock } from '../components/sphere/SectionBlock';
 import { SlotSheet } from '../components/sphere/SlotSheet';
+import { SphereMenu } from '../components/sphere/SphereMenu';
 import { useApp } from '../contexts/AppContext';
 import { useInlineCreateHost, useQuickAdd } from '../contexts/QuickAddContext';
 import { InlineCreate } from '../components/task/InlineCreate';
@@ -16,7 +17,7 @@ import type { SphereId, Task } from '../types';
 
 export function SphereDetail() {
   const { id } = useParams();
-  const { tasks, goals, sections, addSection, addTask, updateTask, sphereSlots, setSphereSlot } = useApp();
+  const { tasks, goals, sections, addSection, addTask, updateTask, sphereSlots, setSphereSlot, customSpheres } = useApp();
   const { openQuickAdd } = useQuickAdd();
   const { spheres } = useSpheres();
   useInlineCreateHost(id ? { sphere: id as SphereId } : {});
@@ -25,8 +26,13 @@ export function SphereDetail() {
   const [newSection, setNewSection] = useState<string | null>(null);
   const [moving, setMoving] = useState<Task | null>(null);
   const [slotOpen, setSlotOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const navigate = useNavigate();
 
   const sphere = spheres.find((s) => s.id === id);
+  /** своя сфера: меню «Изменить» / «Удалить»; у встроенных меню нет */
+  const custom = customSpheres.find((c) => c.id === id) ?? null;
 
   if (!sphere) {
     return (
@@ -49,9 +55,9 @@ export function SphereDetail() {
   const subtasksOf = (parentId: string) => sphereTasks.filter((t) => t.parentId === parentId);
   const sphereGoals = goals.filter((g) => g.sphere === sphere.id);
 
-  /** «Прочее» — плоский список без разделов */
+  /** «Прочее» — без своих новых разделов; разделы удалённых сфер в нём остаются */
   const isOther = sphere.id === 'other';
-  const sphereSections = isOther ? [] : sections.filter((s) => s.sphere === sphere.id);
+  const sphereSections = sections.filter((s) => s.sphere === sphere.id);
   const sectionIds = new Set(sphereSections.map((s) => s.id));
   const unsectioned = topLevel.filter((t) => !t.sectionId || !sectionIds.has(t.sectionId));
   const onMove = sphereSections.length > 0 ? setMoving : null;
@@ -70,10 +76,29 @@ export function SphereDetail() {
       <SubHeader
         title={sphere.name}
         subtitle={
-        isOther ?
+        isOther && sphereSections.length === 0 ?
         `${sphereTasks.length} дел` :
         `${sphereTasks.length} дел · ${sphereSections.length} разделов`
+        }
+        action={
+        custom ?
+        <button
+          ref={menuRef}
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          aria-label={`Меню сферы «${sphere.name}»`}
+          className="-mr-1 mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-soft transition-colors duration-150 ease-out hover:bg-line/60">
+          
+              <MoreHorizontalIcon className="h-5 w-5" strokeWidth={1.9} aria-hidden="true" />
+            </button> :
+        undefined
         } />
+      <SphereMenu
+        sphere={custom}
+        open={menuOpen}
+        anchor={menuRef.current}
+        onClose={() => setMenuOpen(false)}
+        onDeleted={() => navigate('/', { replace: true })} />
       
 
       <InlineCreate />

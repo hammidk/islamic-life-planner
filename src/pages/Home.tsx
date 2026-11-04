@@ -7,6 +7,9 @@ import { PrayerTimeline } from '../components/PrayerTimeline';
 import { SphereCardBody, SPHERE_CARD_CLASS } from '../components/sphere/SphereCard';
 import { SphereEditorSheet } from '../components/sphere/SphereEditorSheet';
 import { MAX_CUSTOM_SPHERES } from '../data/spheres';
+import { SphereMenu } from '../components/sphere/SphereMenu';
+import { useLongPress } from '../hooks/useLongPress';
+import type { CustomSphere } from '../types';
 import { LocationBanner } from '../components/LocationBanner';
 import { WeekSwiper } from '../components/WeekSwiper';
 import { ProfileButton } from '../components/ProfileButton';
@@ -23,6 +26,30 @@ const tasksWord = (count: number): string => {
   if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'дела';
   return 'дел';
 };
+
+/** Карточка своей сферы: тап — страница, долгое нажатие — меню «Изменить» / «Удалить» */
+function CustomSphereCard({ sphere, count, color }: {sphere: CustomSphere;count: number;color: string;}) {
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const ref = React.useRef<HTMLButtonElement>(null);
+  const press = useLongPress(() => setMenuOpen(true));
+  return (
+    <>
+      <button
+        ref={ref}
+        type="button"
+        {...press}
+        onClick={() => navigate(`/sphere/${sphere.id}`)}
+        aria-label={`${sphere.name}, дел: ${count}`}
+        style={{ WebkitTouchCallout: 'none' }}
+        className={`${SPHERE_CARD_CLASS} select-none`}>
+        
+        <SphereCardBody id={sphere.id} name={sphere.name} color={color} count={count} />
+      </button>
+      <SphereMenu sphere={sphere} open={menuOpen} anchor={ref.current} onClose={() => setMenuOpen(false)} />
+    </>);
+
+}
 
 export function Home() {
   const navigate = useNavigate();
@@ -97,16 +124,21 @@ export function Home() {
         <ul className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-px-5 px-5 pb-1">
           {spheres.map((sphere) => {
             const count = open.filter((t) => getSphere(t.sphere).id === sphere.id).length;
+            const custom = customSpheres.find((c) => c.id === sphere.id);
             return (
               <li key={sphere.id} className="shrink-0 snap-start">
+                {custom ?
+                <CustomSphereCard sphere={custom} count={count} color={sphere.color} /> :
+
                 <button
                   type="button"
                   onClick={() => navigate(`/sphere/${sphere.id}`)}
                   aria-label={`${sphere.name}, дел: ${count}`}
                   className={SPHERE_CARD_CLASS}>
                   
-                  <SphereCardBody id={sphere.id} name={sphere.name} color={sphere.color} count={count} />
-                </button>
+                    <SphereCardBody id={sphere.id} name={sphere.name} color={sphere.color} count={count} />
+                  </button>
+                }
               </li>);
 
           })}

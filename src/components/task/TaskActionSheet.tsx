@@ -217,8 +217,8 @@ export function TaskActionSheet({ task, onClose }: TaskActionSheetProps) {
       {back}
       <div className="-mx-3">
         {spheres.map((s) => {
-        // у «Прочее» разделов нет
-        const own = s.id === 'other' ? [] : sections.filter((sec) => sec.sphere === s.id);
+        // у «Прочее» своих разделов нет, но разделы удалённых сфер переезжают в него
+        const own = sections.filter((sec) => sec.sphere === s.id);
         const move = (sectionId?: string) => {
           updateTask(t.id, { sphere: s.id, sectionId, parentId: undefined });
           // подзадачи переезжают вместе с задачей
