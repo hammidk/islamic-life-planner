@@ -13,6 +13,7 @@ import {
 'lucide-react';
 import { BottomSheet } from '../BottomSheet';
 import { SheetOption } from './SheetOption';
+import { ParentPicker } from './ParentPicker';
 import { SphereIcon } from '../SphereIcon';
 import { useApp } from '../../contexts/AppContext';
 import { useTaskDelete } from '../../hooks/useTaskDelete';
@@ -25,8 +26,6 @@ type View = 'main' | 'date' | 'move' | 'parent';
 
 interface TaskActionSheetProps {
   task: Task | null;
-  /** задачи текущего списка — кандидаты в родители */
-  siblings: Task[];
   onClose: () => void;
 }
 
@@ -65,11 +64,11 @@ function ActionRow({
 
 }
 
-export function TaskActionSheet({ task, siblings, onClose }: TaskActionSheetProps) {
+export function TaskActionSheet({ task, onClose }: TaskActionSheetProps) {
   const navigate = useNavigate();
   const { tasks, sections, updateTask, toggleTask } = useApp();
   const remove = useTaskDelete();
-  const { outdentTask } = useTaskTree();
+  const { outdentTask, moveTaskUnder } = useTaskTree();
   const [view, setView] = useState<View>('main');
 
   useEffect(() => {
@@ -251,53 +250,17 @@ export function TaskActionSheet({ task, siblings, onClose }: TaskActionSheetProp
     </>;
 
 
-  const renderParent = (t: Task) => {
-    const candidates = siblings.filter(
-      (s) => s.id !== t.id && !s.parentId && s.status !== 'cancelled'
-    );
-    const hasChildren = tasks.some((c) => c.parentId === t.id);
-    return (
-      <>
-        {back}
-        {hasChildren ?
-        <p className="py-2 text-[14px] leading-relaxed text-muted">
-            У этой задачи уже есть подзадачи — сначала вынеси их, чтобы не создавать третий уровень.
-          </p> :
+  const renderParent = (t: Task) =>
+  <>
+      {back}
+      <ParentPicker
+      task={t}
+      onPick={(p) => {
+        if (moveTaskUnder(t.id, p.id)) onClose();
+      }} />
+    
+    </>;
 
-        <div className="-mx-3">
-            {t.parentId ?
-          <SheetOption
-            label="Не подзадача"
-            onClick={() => {
-              updateTask(t.id, { parentId: undefined });
-              onClose();
-            }} /> :
-
-          null}
-            {candidates.length > 0 ?
-          candidates.map((p) =>
-          <SheetOption
-            key={p.id}
-            label={p.title}
-            selected={t.parentId === p.id}
-            onClick={() => {
-              updateTask(t.id, {
-                parentId: p.id,
-                sphere: p.sphere,
-                sectionId: p.sectionId
-              });
-              onClose();
-            }} />
-
-          ) :
-
-          <p className="px-3 py-2 text-[14px] text-muted">В этом списке нет других задач.</p>
-          }
-          </div>
-        }
-      </>);
-
-  };
 
   return (
     <BottomSheet

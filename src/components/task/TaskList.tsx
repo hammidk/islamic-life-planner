@@ -101,7 +101,7 @@ export function TaskList({ tasks, look, divider = 'divide-line', hideDone = fals
         onReorder={reorderTasks}
         renderItem={renderNode} />
       
-      <TaskActionSheet task={menuTask} siblings={tasks} onClose={() => setMenuTask(null)} />
+      <TaskActionSheet task={menuTask} onClose={() => setMenuTask(null)} />
     </>);
 
 }
