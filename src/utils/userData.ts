@@ -15,6 +15,7 @@ import type { BlockPlacement } from './blockPlacement';
 import { todayISO } from './prayer';
 import { normalizeCustomSpheres } from './spheres';
 import { pruneDoneDates } from './occurrence';
+import { isPrayerId } from '../data/appData';
 
 /** Всё, что принадлежит пользователю и сохраняется в облаке */
 export interface UserSnapshot {
@@ -125,6 +126,10 @@ export function normalize(raw: unknown): UserSnapshot | null {
     if (!next.period) next = { ...next, period: 'untilDhuhr' };
     if (!next.sphere) next = { ...next, sphere: 'other' };
     if (typeof next.date === 'string' && next.date.trim() === '') next = { ...next, date: undefined };
+    if ('prayerId' in next && !isPrayerId(next.prayerId)) {
+      next = { ...next };
+      delete next.prayerId;
+    }
     if ('doneDates' in next) {
       // отметки вхождений повторов: только корректные даты не старше 60 дней
       const doneDates = pruneDoneDates(next.doneDates, todayISO());

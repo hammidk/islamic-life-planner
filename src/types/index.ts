@@ -1,4 +1,5 @@
 import type { ColorKey, IconKey } from '../data/spheres';
+import type { PrayerId } from '../data/appData';
 
 /**
  * Встроенные: 'faith' | 'rizq' | 'health' | 'family' | 'ideas' | 'other';
@@ -108,6 +109,8 @@ export interface Task {
   urgent?: boolean;
   /** повторяющееся дело: дни YYYY-MM-DD, в которые вхождение выполнено (старше 60 дней чистятся) */
   doneDates?: string[];
+  /** задача блока этого намаза на «Сегодня» («азкары после Фаджра»); с повтором — привычка */
+  prayerId?: PrayerId;
 }
 
 /** Время сферы в ежедневном расписании: «Удел» с 10:00 на 60 минут */
