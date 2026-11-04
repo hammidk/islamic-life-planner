@@ -6,6 +6,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CornerDownRightIcon,
+  CornerUpLeftIcon,
   FolderInputIcon,
   Maximize2Icon,
   Trash2Icon } from
@@ -14,6 +15,8 @@ import { BottomSheet } from '../BottomSheet';
 import { SheetOption } from './SheetOption';
 import { SphereIcon } from '../SphereIcon';
 import { useApp } from '../../contexts/AppContext';
+import { useTaskDelete } from '../../hooks/useTaskDelete';
+import { useTaskTree } from '../../hooks/useTaskTree';
 import { spheres } from '../../data/appData';
 import { formatTaskDate, quickDates } from '../../utils/taskOptions';
 import type { Task } from '../../types';
@@ -64,7 +67,9 @@ function ActionRow({
 
 export function TaskActionSheet({ task, siblings, onClose }: TaskActionSheetProps) {
   const navigate = useNavigate();
-  const { tasks, sections, updateTask, deleteTask, toggleTask } = useApp();
+  const { tasks, sections, updateTask, toggleTask } = useApp();
+  const remove = useTaskDelete();
+  const { outdentTask } = useTaskTree();
   const [view, setView] = useState<View>('main');
 
   useEffect(() => {
@@ -107,7 +112,7 @@ export function TaskActionSheet({ task, siblings, onClose }: TaskActionSheetProp
             danger: true,
             onClick: () => {
               onClose();
-              deleteTask(t.id);
+              void remove(t);
             }
           }].
           map((a) =>
@@ -151,11 +156,21 @@ export function TaskActionSheet({ task, siblings, onClose }: TaskActionSheetProp
             chevron
             onClick={() => setView('move')} />
           
-          <ActionRow
+ <ActionRow
             icon={<CornerDownRightIcon className={iconClass} strokeWidth={1.8} />}
             label="Сделать подзадачей…"
             chevron
             onClick={() => setView('parent')} />
+          
+          {t.parentId && tasks.some((p) => p.id === t.parentId) ?
+          <ActionRow
+            icon={<CornerUpLeftIcon className={iconClass} strokeWidth={1.8} />}
+            label="Сделать обычным делом"
+            onClick={() => {
+              outdentTask(t.id);
+              onClose();
+            }} /> :
+          null}
           
         </div>
       </>);

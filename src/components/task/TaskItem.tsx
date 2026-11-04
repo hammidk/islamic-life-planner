@@ -39,6 +39,8 @@ interface TaskItemProps {
   onMenu: (task: Task) => void;
   onIndent?: () => void;
   onOutdent?: () => void;
+  /** подзадача без родителя в этом списке: «↳ Название родителя» */
+  parentTitle?: string;
 }
 
 /** «На сегодня»: дата = сегодня без времени; повторное нажатие снимает дату */
@@ -65,8 +67,8 @@ function TodayToggle({ task }: {task: Task;}) {
 }
 
 /** Одна строка дела на всех экранах: жесты, правка на месте, пункты */
-export function TaskItem({ task, look, controls, completing, onToggle, onMenu, onIndent, onOutdent }: TaskItemProps) {
-  const { checklists } = useApp();
+export function TaskItem({ task, look, controls, completing, onToggle, onMenu, onIndent, onOutdent, parentTitle }: TaskItemProps) {
+  const { checklists, tasks } = useApp();
   const { editingId, startEdit } = useQuickAdd();
   const remove = useTaskDelete();
   const [open, setOpen] = useState(false);
@@ -74,6 +76,7 @@ export function TaskItem({ task, look, controls, completing, onToggle, onMenu, o
   if (editingId === task.id) return <InlineEdit task={task} />;
 
   const items = checklists[task.id] ?? [];
+  const hasChildren = tasks.some((t) => t.parentId === task.id && t.status !== 'cancelled');
   const doneItems = items.filter((i) => i.done).length;
 
   return (
@@ -83,10 +86,14 @@ export function TaskItem({ task, look, controls, completing, onToggle, onMenu, o
         label={task.title}
         surface={look.surface}
         onLongPress={() => onMenu(task)}
-        onDelete={() => remove(task)}
+        onDelete={() => void remove(task)}
+        confirmDelete={hasChildren}
         onIndent={onIndent}
         onOutdent={onOutdent}>
 
+        {parentTitle ?
+        <p className="-mb-2.5 truncate pl-[35px] pt-2 text-[11.5px] text-muted">↳ {parentTitle}</p> :
+        null}
         <TaskRow
           task={task}
           showDate={look.showDate}

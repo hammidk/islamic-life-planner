@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { appState, makeTask, renderApp } from './renderApp';
 import { lockAxis, resolveOpenSwipe, resolveSwipe, rubber } from '../utils/gestures';
@@ -52,18 +52,34 @@ describe('классификация жеста строки', () => {
 });
 
 describe('удаление дела и «Отменить»', () => {
-  it('«Удалить» из свайпа убирает дело с подзадачами, тост возвращает всё обратно', async () => {
+  const deleteButtonOf = (title: string) =>
+  screen.getByLabelText(title).closest('div.relative')!.parentElement!.querySelector(
+    'button.bg-\\[\\#D93B30\\]'
+  ) as HTMLButtonElement;
+
+  it('дело без подзадач удаляется сразу, «Отменить» возвращает', async () => {
+    const user = userEvent.setup();
+    renderApp('/day/2026-11-03', { tasks: [makeTask('Позвонить', { date: '2026-11-03' })] });
+    await user.click(deleteButtonOf('Позвонить'));
+    expect(appState.tasks).toHaveLength(0);
+    expect(screen.getByRole('status').textContent).toContain('Дело удалено');
+    await user.click(screen.getByRole('button', { name: 'Отменить' }));
+    expect(appState.tasks.map((t) => t.title)).toEqual(['Позвонить']);
+  });
+
+  it('родитель удаляется после подтверждения «Удалить дело и N подзадач?», тост возвращает всё обратно', async () => {
     const user = userEvent.setup();
     const parent = makeTask('Ремонт', { sphere: 'rizq' });
     const sub = makeTask('Купить краску', { sphere: 'rizq', parentId: parent.id });
     renderApp('/sphere/rizq', { tasks: [parent, sub, makeTask('Другое', { sphere: 'rizq' })] });
 
-    const row = screen.getByLabelText('Ремонт').closest('div.relative')!.parentElement!;
-    const del = row.querySelector('button.bg-\\[\\#D93B30\\]') as HTMLButtonElement;
-    await user.click(del);
+    await user.click(deleteButtonOf('Ремонт'));
+    const dialog = screen.getByRole('dialog', { name: 'Удалить дело и 1 подзадачу?' });
+    expect(appState.tasks).toHaveLength(3);
+    await user.click(within(dialog).getByRole('button', { name: 'Удалить' }));
 
     expect(appState.tasks.map((t) => t.title)).toEqual(['Другое']);
-    expect(screen.getByRole('status').textContent).toContain('Удалено дело и подзадач: 1');
+    expect(screen.getByRole('status').textContent).toContain('Удалено дело и 1 подзадачу');
 
     await user.click(screen.getByRole('button', { name: 'Отменить' }));
     expect(appState.tasks.map((t) => t.title).sort()).toEqual(['Другое', 'Купить краску', 'Ремонт']);

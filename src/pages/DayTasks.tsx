@@ -186,8 +186,7 @@ function TodayView({ date }: {date: string;}) {
     (t) =>
     t.sphere === sphere &&
     t.status === 'open' &&
-    !t.time &&
-    !t.parentId && (
+    !t.time && (
     !t.date || t.date === date)
   ).
   sort(compareOrder);
