@@ -68,6 +68,8 @@ interface SortableListProps<T> {
    * пункта. Ключ постоянный: при вставке строк перед ним поле не пересоздаётся и не теряет фокус.
    */
   extra?: {afterId: string | null;key: string;node: React.ReactNode;} | null;
+  /** оформление копии в руке; по умолчанию — подъём с тенью */
+  overlayClassName?: string;
 }
 
 function SortableRow({
@@ -119,7 +121,8 @@ export function SortableList<T>({
   canNest,
   onNest,
   className,
-  extra
+  extra,
+  overlayClassName = 'scale-[1.02] rounded-xl shadow-[0_10px_24px_rgba(29,33,30,0.16)]'
 }: SortableListProps<T>) {
   const sensors = useDragSensors();
   const ids = items.map(getId);
@@ -204,7 +207,7 @@ export function SortableList<T>({
       {createPortal(
         <DragOverlay modifiers={[restrictToVerticalAxis]} dropAnimation={null} zIndex={70}>
           {active ?
-          <div className="scale-[1.02] rounded-xl shadow-[0_10px_24px_rgba(29,33,30,0.16)]">{renderOverlay(active)}</div> :
+          <div className={overlayClassName}>{renderOverlay(active)}</div> :
           null}
         </DragOverlay>,
         document.body

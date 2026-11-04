@@ -5,7 +5,7 @@ import { InlineCreate } from './task/InlineCreate';
 import { useApp } from '../contexts/AppContext';
 import { useQuickAdd } from '../contexts/QuickAddContext';
 import { prayerChecklistSuggestions } from '../data/taskValues';
-import { isPrayerId, prayerName } from '../data/appData';
+import { isPrayerId } from '../data/appData';
 import { isDoneOn, isOpenOn, occursOn } from '../utils/occurrence';
 import { compareOrder } from '../utils/taskOptions';
 
@@ -28,8 +28,8 @@ const HIDE_DELAY = 450;
 /**
  * Намаз в хронологии дня: сплошной блок от края до края экрана (компенсирует отступ Shell).
  * Отмеченный намаз исчезает из списка — отметка остаётся в prayersDone.
- * Внутри — задачи этого намаза (prayerId) на этот день: создаются той же карточкой,
- * что и обычные дела, с неснимаемым чипом «К намазу».
+ * Внутри — задачи этого намаза (prayerId) на этот день: создаются той же карточкой и рисуются
+ * той же строкой, что и обычные дела, в оформлении variant="prayer" (как прежние пункты).
  */
 export function PrayerRow({ id, name, time, day, hint, isCurrent = false, isLate = false }: PrayerRowProps) {
   const { togglePrayer, tasks, addTask } = useApp();
@@ -108,23 +108,31 @@ export function PrayerRow({ id, name, time, day, hint, isCurrent = false, isLate
         </button>
       </div>
       {open && prayerId ?
-      <div className="mt-2 rounded-xl bg-canvas px-3 py-1 text-ink">
-          <div className="pt-2">
-            <InlineCreate slot={slot} lockedChip={`К намазу: ${prayerName(prayerId)}`} />
-          </div>
+      // как прежние пункты: без подложки, в цвет блока; логика — общая с задачами
+      <div className="mt-2 pl-[34px]">
+          <InlineCreate slot={slot} variant="prayer" />
           {openTasks.length > 0 ?
-        <DayTaskList tasks={openTasks} divider="divide-line" surface="bg-canvas" showDate={false} day={day} hidePrayer hideDone /> :
+        <DayTaskList
+          tasks={openTasks}
+          divider="divide-transparent"
+          // строки цвета блока: под ними слои действий свайпа, а блок остаётся сплошным
+          surface={isLate ? 'bg-[#B4443A]' : 'bg-primary'}
+          showDate={false}
+          day={day}
+          variant="prayer"
+          hidePrayer
+          hideDone /> :
         null}
           {suggestions.length > 0 ?
-        <div className="flex flex-wrap gap-1.5 pb-1 pt-2">
+        <div className="flex flex-wrap gap-1.5 pb-1 pt-1">
               {suggestions.map((s) =>
           <button
             key={s}
             type="button"
             // подсказка создаёт настоящую задачу блока, как карточка
             onClick={() => addTask({ title: s, prayerId, sphere: 'faith', date: day })}
-            className="rounded-full border border-line bg-surface px-2.5 py-1 text-[12.5px] text-ink-soft transition-colors duration-150 ease-out hover:border-primary/40">
-
+            className="rounded-full border border-white/40 px-2.5 py-1 text-[12.5px] text-white transition-colors duration-150 ease-out hover:bg-white/10">
+            
                   + {s}
                 </button>
           )}
@@ -133,10 +141,10 @@ export function PrayerRow({ id, name, time, day, hint, isCurrent = false, isLate
           <button
           type="button"
           onClick={() => openInline({ prayerId, sphere: 'faith', date: day }, slot)}
-          className="flex min-h-[44px] items-center gap-1 text-[13px] font-medium text-primary">
+          className="flex min-h-[44px] items-center gap-1 text-[13px] font-medium text-white/90">
 
             <PlusIcon className="h-3.5 w-3.5" strokeWidth={2.2} aria-hidden="true" />
-            добавить задачу
+            добавить пункт
           </button>
         </div> :
       null}

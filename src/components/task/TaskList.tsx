@@ -72,9 +72,20 @@ export function TaskList({ tasks, look, divider = 'divide-line', hideDone = fals
 
 
   /** копия строки в руке при перетаскивании */
+  const prayer = look.variant === 'prayer';
+  /** копия строки в руке: в блоке намаза — подсветка white/10 поверх цвета блока, без тени */
   const overlay = (task: Task) =>
   <div className={`rounded-xl px-1 ${look.surface}`}>
-      <TaskRow task={task} showDate={look.showDate} sphereColor={look.sphereColor} showPrefix={look.showPrefix} durationInMeta={look.durationInMeta} />
+      <div className={prayer ? '-mx-1 rounded-xl bg-white/10 px-1' : ''}>
+        <TaskRow
+        task={task}
+        variant={look.variant}
+        showDate={look.showDate}
+        sphereColor={look.sphereColor}
+        showPrefix={look.showPrefix}
+        durationInMeta={look.durationInMeta} />
+      
+      </div>
     </div>;
 
 
@@ -87,12 +98,13 @@ export function TaskList({ tasks, look, divider = 'divide-line', hideDone = fals
       onOutdent: node.parentTitle ? () => outdentTask(node.task.id) : undefined
     })}
       {node.children.length > 0 && !drag.isDragging ?
-    <div className="mb-1 ml-[11px] border-l border-line pl-[17px]">
+    <div className={`mb-1 ml-[11px] border-l pl-[17px] ${prayer ? 'border-white/25' : 'border-line'}`}>
           <SortableList
         items={node.children}
         getId={(t) => t.id}
         onReorder={reorderTasks}
         onMenu={setMenuTask}
+        overlayClassName={prayer ? 'rounded-xl' : undefined}
         className={`divide-y ${divider}`}
         renderOverlay={overlay}
         renderItem={(sub, subDrag) =>
@@ -118,11 +130,12 @@ export function TaskList({ tasks, look, divider = 'divide-line', hideDone = fals
         onMenu={(n) => setMenuTask(n.task)}
         canNest={(n, parent) => canMoveUnder(all, n.task.id, parent.task.id) === null}
         onNest={(n, parent) => moveTaskUnder(n.task.id, parent.task.id)}
+        overlayClassName={prayer ? 'rounded-xl' : undefined}
         renderOverlay={(n) =>
         <div>
             {overlay(n.task)}
             {n.children.length > 0 ?
-          <p className={`pb-2 pl-[40px] text-[12px] text-muted ${look.surface}`}>+ подзадач: {n.children.length}</p> :
+          <p className={`pb-2 pl-[40px] text-[12px] ${prayer ? 'text-white/70' : 'text-muted'} ${look.surface}`}>+ подзадач: {n.children.length}</p> :
           null}
           </div>
         }

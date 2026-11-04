@@ -16,6 +16,8 @@ interface DayTaskListProps {
   day?: string;
   /** список внутри блока намаза — без подписи намаза */
   hidePrayer?: boolean;
+  /** prayer — оформление прежних пунктов блока намаза (белый текст в цвет блока) */
+  variant?: 'default' | 'prayer';
 }
 
 /** Список дел дня (Сегодня, день, история): строки с раскрываемыми пунктами */
@@ -27,7 +29,8 @@ export function DayTaskList({
   showDate = true,
   sphereColor = false,
   day,
-  hidePrayer = false
+  hidePrayer = false,
+  variant = 'default'
 }: DayTaskListProps) {
   return (
     <TaskList
@@ -35,7 +38,7 @@ export function DayTaskList({
       divider={divider}
       hideDone={hideDone}
       day={day}
-      look={{ surface, showDate, sphereColor, checklist: true, hidePrayer }} />);
+      look={{ surface, showDate, sphereColor, checklist: variant !== 'prayer', hidePrayer, variant }} />);
 
 
 }

@@ -27,21 +27,26 @@ const openBlock = async (user: ReturnType<typeof userEvent.setup>, name: string)
 };
 
 describe('создание в блоке намаза = создание задачи', () => {
-  it('из блока Аср: prayerId = asr, сфера «Вера», дата — открытый день, чип «К намазу» не снимается', async () => {
+  it('из блока Аср: prayerId = asr, сфера «Вера», дата — открытый день; карточка в оформлении блока', async () => {
     const user = userEvent.setup();
     renderApp('/today');
     await openBlock(user, 'Аср');
-    await user.click(screen.getByRole('button', { name: 'добавить задачу' }));
-    expect(screen.getByText('К намазу: Аср')).toBeTruthy();
-    // чип — не кнопка: снять или сменить его нельзя
-    expect(screen.queryByRole('button', { name: /К намазу/ })).toBeNull();
-    // остальные чипы — как у задач
-    expect(screen.getByRole('button', { name: 'Сфера: Вера' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /^Дата/ })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Повтор' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'добавить пункт' }));
+    const input = screen.getByRole('textbox', { name: 'Название' }) as HTMLInputElement;
+    expect(input.placeholder).toBe('Новый пункт');
+    expect(input.className).toContain('text-[16px]');
+    expect(input.className).toContain('text-white');
+    // привязку задаёт сам блок — отдельного чипа нет; остальные чипы — прозрачные пилюли при фокусе
+    expect(screen.queryByText(/К намазу/)).toBeNull();
+    expect(document.activeElement).toBe(input);
+    // дата уже задана — чип активный (white/25), остальные — white/15
+    expect(screen.getByRole('button', { name: /^Дата/ }).className).toContain('bg-white/25');
+    expect(screen.getByRole('button', { name: 'Повтор' }).className).toContain('bg-white/15');
+    expect(screen.getByRole('button', { name: 'Длительность' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Подробно' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Сфера/ })).toBeNull();
 
-    await user.type(screen.getByRole('textbox', { name: 'Название' }), 'Сунна после Асра{Enter}');
+    await user.type(input, 'Сунна после Асра{Enter}');
     const task = appState.tasks.find((t) => t.title === 'Сунна после Асра')!;
     expect(task).toMatchObject({ prayerId: 'asr', sphere: 'faith', date: TEST_TODAY });
   });
@@ -50,7 +55,7 @@ describe('создание в блоке намаза = создание зад�
     const user = userEvent.setup();
     renderApp('/today');
     await openBlock(user, 'Магриб');
-    await user.click(screen.getByRole('button', { name: 'добавить задачу' }));
+    await user.click(screen.getByRole('button', { name: 'добавить пункт' }));
     const input = screen.getByRole('textbox', { name: 'Название' }) as HTMLInputElement;
     await user.type(input, 'Азкары{Enter}Сунна{Enter}Дуа{Enter}');
     expect(appState.tasks.map((t) => [t.title, t.prayerId, t.sphere])).toEqual([
@@ -61,11 +66,9 @@ describe('создание в блоке намаза = создание зад�
     const again = screen.getByRole('textbox', { name: 'Название' }) as HTMLInputElement;
     expect(again.value).toBe('');
     expect(document.activeElement).toBe(again);
-    expect(screen.getByText('К намазу: Магриб')).toBeTruthy();
-    // созданные — строками блока
-    const block = screen.getByRole('button', { name: 'Скрыть дела: Магриб' }).closest('.bg-primary')!;
-    expect(within(block as HTMLElement).getByLabelText('Сунна')).toBeTruthy();
-    expect(block.textContent).toContain('0/3');
+    // созданные — строками блока, счётчик 0/3
+    expect(screen.getByLabelText('Сунна')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Скрыть дела: Магриб' }).textContent).toContain('0/3');
   });
 
   it('подсказка «+ Азкары» создаёт задачу блока', async () => {
@@ -243,3 +246,51 @@ describe('миграция старых пунктов намазов', () => {
     expect(screen.getByLabelText('Витр')).toBeTruthy();
   });
 });
+
+/** разметка строки без анимационных стилей framer и случайных id — для снапшота */
+const stable = (el: HTMLElement) => {
+  const copy = el.cloneNode(true) as HTMLElement;
+  [copy, ...Array.from(copy.querySelectorAll<HTMLElement>('*'))].forEach((n) => {
+    n.removeAttribute('style');
+    n.removeAttribute('data-row-id');
+  });
+  return copy;
+};
+
+describe('variant: внутри блока — как прежние пункты, вне блока — как задачи', () => {
+  const habit = () => makeTask('Азкары', {
+    sphere: 'faith', prayerId: 'asr', date: TEST_TODAY, time: '15:30', repeat: { kind: 'daily' }, description: 'после салама\nвторая строка'
+  });
+
+  it('в блоке: только название, заметка 12px, справа время и ↻; без сферы, префикса и мета-строки; цвет блока', async () => {
+    const user = userEvent.setup();
+    renderApp('/today', { tasks: [habit()] });
+    await openBlock(user, 'Аср');
+    const row = screen.getByLabelText('Азкары');
+    expect(row.textContent).toBe('Азкарыпосле салама15:30↻');
+    expect(row.className).toContain('bg-primary');
+    expect(row.className).not.toContain('bg-surface');
+    expect(row.querySelector('svg.lucide-layers, svg.lucide-compass')).toBeNull();
+    expect(within(row).getByText('после салама').className).toContain('text-[12px]');
+    expect(stable(row)).toMatchSnapshot('строка в блоке намаза');
+  });
+
+  it('вне блока: обычная строка с иконкой сферы, мета-строкой и подписью намаза', () => {
+    renderApp('/sphere/faith', { tasks: [habit()] });
+    const row = screen.getByLabelText('Азкары');
+    expect(row.textContent).toContain('Каждый день');
+    expect(row.textContent).toContain('Аср');
+    expect(row.className).toContain('bg-surface');
+    expect(stable(row)).toMatchSnapshot('строка вне блока');
+  });
+});
+
+  it('красный блок (меньше 40 минут): строки в красный цвет блока, текст белый', async () => {
+    const user = userEvent.setup();
+    // в 10:00 Фаджр уже не отмечен и его время вышло — блок красный
+    renderApp('/today', { tasks: [makeTask('Дуа', { sphere: 'faith', prayerId: 'fajr', date: TEST_TODAY })] });
+    await openBlock(user, 'Фаджр');
+    const row = screen.getByLabelText('Дуа');
+    expect(row.className).toContain('bg-[#B4443A]');
+    expect(within(row).getByText('Дуа').className).toContain('text-white/95');
+  });

@@ -25,6 +25,8 @@ interface SwipeRowProps {
   dragging?: boolean;
   /** при перетаскивании строка станет родителем */
   nestTarget?: boolean;
+  /** prayer — в блоке намаза: слой «Подзадача» светлее блока, чтобы был виден */
+  variant?: 'default' | 'prayer';
   children: React.ReactNode;
 }
 
@@ -45,6 +47,7 @@ export function SwipeRow({
   dragListeners,
   dragging = false,
   nestTarget = false,
+  variant = 'default',
   children
 }: SwipeRowProps) {
   const actionsWidth = ACTION_WIDTH * (onOutdent ? 2 : 1);
@@ -120,7 +123,7 @@ export function SwipeRow({
       {onIndent ?
       <motion.div
         style={{ opacity: indentOpacity }}
-        className="absolute inset-0 flex items-center justify-start bg-primary pl-5 text-white"
+        className={`absolute inset-0 flex items-center justify-start pl-5 text-white ${variant === 'prayer' ? 'bg-white/25' : 'bg-primary'}`}
         aria-hidden="true">
 
           <span className="flex items-center gap-1.5 text-[13px] font-medium">
