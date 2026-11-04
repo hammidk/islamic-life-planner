@@ -109,7 +109,7 @@ export function formatTimePrefix(task: Task, from?: string): string | null {
  */
 export function formatRowMeta(
 task: Task,
-options: {showDate?: boolean;withSphere?: boolean;withDuration?: boolean;sphereName?: string;} = {})
+options: {showDate?: boolean;withSphere?: boolean;withDuration?: boolean;sphereName?: string;prayerName?: string;} = {})
 : string {
   const showDate = options.showDate ?? true;
   const withSphere = options.withSphere ?? true;
@@ -123,6 +123,8 @@ options: {showDate?: boolean;withSphere?: boolean;withDuration?: boolean;sphereN
     if (task.repeat && task.repeat.kind !== 'none') parts.push(formatRepeat(task.repeat));
   }
   if (options.withDuration && task.duration) parts.push(`${task.duration} мин`);
+  // задача блока намаза: «Аср»
+  if (options.prayerName) parts.push(options.prayerName);
   if (withSphere) parts.push(sphereName);
   return parts.join(' · ');
 }

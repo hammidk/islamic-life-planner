@@ -15,6 +15,8 @@ import type { BlockPlacement } from './blockPlacement';
 import { todayISO } from './prayer';
 import { normalizeCustomSpheres } from './spheres';
 import { pruneDoneDates } from './occurrence';
+import { isPrayerId } from '../data/appData';
+import { migratePrayerItems } from './prayerMigration';
 
 /** Всё, что принадлежит пользователю и сохраняется в облаке */
 export interface UserSnapshot {
@@ -32,6 +34,8 @@ export interface UserSnapshot {
   blockPlacement?: BlockPlacement;
   /** сферы, созданные пользователем; в старых снимках поля нет */
   customSpheres?: CustomSphere[];
+  /** старые пункты намазов уже превращены в задачи (один раз) */
+  prayerItemsMigrated?: boolean;
 }
 
 interface StoredSnapshot {
@@ -112,7 +116,13 @@ function normalizeChecklists(raw: unknown): Record<string, ChecklistItem[]> {
 }
 
 /** Защищает приложение от повреждённых или неполных данных */
+/** Чтение данных: нормализация и однократная миграция пунктов намазов в задачи */
 export function normalize(raw: unknown): UserSnapshot | null {
+  const snap = normalizeRaw(raw);
+  return snap ? migratePrayerItems(snap, todayISO()) : null;
+}
+
+function normalizeRaw(raw: unknown): UserSnapshot | null {
   if (!isRecord(raw)) return null;
   const sections = arr<Section>(raw.sections).filter((s) => s && s.id !== LEGACY_OTHER_SECTION);
   const tasks = arr<Task>(raw.tasks).
@@ -125,6 +135,10 @@ export function normalize(raw: unknown): UserSnapshot | null {
     if (!next.period) next = { ...next, period: 'untilDhuhr' };
     if (!next.sphere) next = { ...next, sphere: 'other' };
     if (typeof next.date === 'string' && next.date.trim() === '') next = { ...next, date: undefined };
+    if ('prayerId' in next && !isPrayerId(next.prayerId)) {
+      next = { ...next };
+      delete next.prayerId;
+    }
     if ('doneDates' in next) {
       // отметки вхождений повторов: только корректные даты не старше 60 дней
       const doneDates = pruneDoneDates(next.doneDates, todayISO());
@@ -148,7 +162,8 @@ export function normalize(raw: unknown): UserSnapshot | null {
     sphereSlots: normalizeSlots(raw.sphereSlots),
     // действует только сегодня; записи старше 7 дней чистятся
     blockPlacement: prunePlacement(raw.blockPlacement, todayISO()),
-    customSpheres: normalizeCustomSpheres(raw.customSpheres)
+    customSpheres: normalizeCustomSpheres(raw.customSpheres),
+    prayerItemsMigrated: raw.prayerItemsMigrated === true
   };
 }
 

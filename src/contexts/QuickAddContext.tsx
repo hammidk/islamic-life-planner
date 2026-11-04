@@ -14,6 +14,13 @@ interface QuickAddState {
   openQuickAdd: (preset?: Partial<TaskDraft>) => void;
   /** экран со списком дел: «+» создаёт карточку вверху списка с этим контекстом */
   registerInlineHost: (preset: Partial<TaskDraft>) => () => void;
+  /**
+   * Карточка создания в определённом месте экрана (например, в блоке намаза): тот же черновик
+   * и тот же код создания, место — slot у <InlineCreate slot>.
+   */
+  openInline: (preset: Partial<TaskDraft>, slot: string) => void;
+  /** где сейчас открыта карточка: 'page' — вверху списка экрана */
+  inlineSlot: string;
   /** создать дело из карточки и открыть новую пустую с тем же контекстом; false — пустое название */
   commitInline: () => boolean;
   closeInline: () => void;
@@ -38,6 +45,7 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
   /** скрытое поле: фокус в нём в момент тапа по «+» открывает клавиатуру на iPhone, дальше фокус переходит в карточку */
   const keyboardProxyRef = useRef<HTMLInputElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [inlineSlot, setInlineSlot] = useState('page');
 
   const openQuickAdd = useCallback(
     (preset?: Partial<TaskDraft>) => {
@@ -48,7 +56,21 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
       keyboardProxyRef.current?.focus({ preventScroll: true });
       setEditingId(null);
       resetDraft(presetRef.current);
+      setInlineSlot('page');
       setMode(host ? 'inline' : 'quick');
+    },
+    [resetDraft]
+  );
+
+  const openInline = useCallback(
+    (preset: Partial<TaskDraft>, slot: string) => {
+      presetRef.current = preset;
+      baselineRef.current = JSON.stringify({ ...emptyDraft(), ...preset });
+      keyboardProxyRef.current?.focus({ preventScroll: true });
+      setEditingId(null);
+      resetDraft(preset);
+      setInlineSlot(slot);
+      setMode('inline');
     },
     [resetDraft]
   );
@@ -102,7 +124,8 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
       repeat: draft.repeat,
       urgent: draft.urgent || undefined,
       intention: draft.intention.trim() || undefined,
-      result: draft.result.trim() || undefined
+      result: draft.result.trim() || undefined,
+      prayerId: draft.prayerId
     });
     draft.checklist.forEach((item) => addChecklistItem(id, item.title));
     return true;
@@ -111,16 +134,17 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
   /** быстрый лист и карточка вверху списка: после добавления — новая пустая с тем же контекстом */
   const commitAndContinue = useCallback((): boolean => {
     if (!commit()) return false;
-    // следующая карточка наследует сферу, раздел и дату; время, длительность, повтор и заметка сбрасываются
+    // следующая карточка наследует сферу, раздел, дату и намаз; время, длительность, повтор и заметка сбрасываются
     const next: Partial<TaskDraft> = {
       date: draft.date,
       sphere: draft.sphere,
-      sectionId: draft.sectionId
+      sectionId: draft.sectionId,
+      prayerId: draft.prayerId
     };
     baselineRef.current = JSON.stringify({ ...emptyDraft(), ...next });
     resetDraft(next);
     return true;
-  }, [commit, draft.date, draft.sphere, draft.sectionId, resetDraft]);
+  }, [commit, draft.date, draft.sphere, draft.sectionId, draft.prayerId, resetDraft]);
 
   const saveFull = useCallback(() => {
     setConfirm(false);
@@ -175,6 +199,8 @@ export function QuickAddProvider({ children }: {children: React.ReactNode;}) {
       value={{
         mode,
         openQuickAdd,
+        openInline,
+        inlineSlot,
         registerInlineHost,
         commitInline: commitAndContinue,
         closeInline: close,

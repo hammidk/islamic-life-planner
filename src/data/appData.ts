@@ -10,6 +10,12 @@ import type {
 
 export type ObligatoryPrayerId = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
 
+/** Блоки намазов на «Сегодня»: пять обязательных и Тахаджуд */
+export type PrayerId = ObligatoryPrayerId | 'tahajjud';
+export const PRAYER_IDS: PrayerId[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha', 'tahajjud'];
+
+export const isPrayerId = (v: unknown): v is PrayerId => PRAYER_IDS.includes(v as PrayerId);
+
 /**
  * Пять обязательных намазов — опорные точки дня.
  * Время приходит из живых данных (contexts/LiveDataContext), здесь — только названия и порядок.
@@ -58,3 +64,7 @@ export interface Achievement {
 }
 
 export const achievements: Achievement[] = [];
+/** «Аср», «Тахаджуд» */
+export function prayerName(id: PrayerId): string {
+  return id === 'tahajjud' ? 'Тахаджуд' : prayerMeta.find((p) => p.id === id)?.name ?? id;
+}

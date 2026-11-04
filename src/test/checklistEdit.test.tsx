@@ -65,16 +65,6 @@ describe('правка подпунктов на месте', () => {
     expect(row.className).toContain('min-h-[44px]');
   });
 
-  it('у пунктов намаза', async () => {
-    const user = userEvent.setup();
-    renderApp('/today', { checklists: { fajr: [item('p1', 'Азкары')] } });
-    await user.click(screen.getByRole('button', { name: 'Показать пункты: Фаджр' }));
-    await user.click(screen.getByRole('button', { name: 'Азкары' }));
-    const edit = screen.getByRole('textbox', { name: 'Пункт' });
-    await user.type(edit, ' утренние{Enter}');
-    expect(appState.checklists.fajr[0].title).toBe('Азкары утренние');
-    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Новый пункт' }));
-  });
 
   it('в «Подробно» при создании дела', async () => {
     const user = userEvent.setup();

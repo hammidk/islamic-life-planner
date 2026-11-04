@@ -8,6 +8,7 @@ import {
   CornerDownRightIcon,
   CornerUpLeftIcon,
   FolderInputIcon,
+  MoonStarIcon,
   Maximize2Icon,
   Trash2Icon } from
 'lucide-react';
@@ -16,13 +17,16 @@ import { SheetOption } from './SheetOption';
 import { ParentPicker } from './ParentPicker';
 import { SphereIcon } from '../SphereIcon';
 import { useApp } from '../../contexts/AppContext';
+import { useLive } from '../../contexts/LiveDataContext';
+import { PRAYER_IDS, prayerName } from '../../data/appData';
+import type { PrayerId } from '../../data/appData';
 import { useTaskDelete } from '../../hooks/useTaskDelete';
 import { useTaskTree } from '../../hooks/useTaskTree';
 import { useSpheres } from '../../hooks/useSpheres';
 import { formatTaskDate, quickDates } from '../../utils/taskOptions';
 import type { Task } from '../../types';
 
-type View = 'main' | 'date' | 'move' | 'parent';
+type View = 'main' | 'date' | 'move' | 'parent' | 'prayer';
 
 interface TaskActionSheetProps {
   task: Task | null;
@@ -32,7 +36,8 @@ interface TaskActionSheetProps {
 const titles: Record<Exclude<View, 'main'>, string> = {
   date: 'Дата завершения',
   move: 'Переместить в список',
-  parent: 'Сделать подзадачей'
+  parent: 'Сделать подзадачей',
+  prayer: 'Привязка к намазу'
 };
 
 function ActionRow({
@@ -71,6 +76,7 @@ export function TaskActionSheet({ task, onClose }: TaskActionSheetProps) {
   const { outdentTask, moveTaskUnder } = useTaskTree();
   const [view, setView] = useState<View>('main');
   const { spheres, getSphere } = useSpheres();
+  const { todayISO } = useLive();
 
   useEffect(() => {
     if (task) setView('main');
@@ -157,6 +163,13 @@ export function TaskActionSheet({ task, onClose }: TaskActionSheetProps) {
             onClick={() => setView('move')} />
           
  <ActionRow
+            icon={<MoonStarIcon className={iconClass} strokeWidth={1.8} />}
+            label="Привязка к намазу…"
+            hint={t.prayerId ? prayerName(t.prayerId) : 'Нет'}
+            chevron
+            onClick={() => setView('prayer')} />
+          
+          <ActionRow
             icon={<CornerDownRightIcon className={iconClass} strokeWidth={1.8} />}
             label="Сделать подзадачей…"
             chevron
@@ -176,6 +189,26 @@ export function TaskActionSheet({ task, onClose }: TaskActionSheetProps) {
       </>);
 
   };
+
+  /** привязка к блоку намаза; подзадачи переезжают вместе с задачей */
+  const bindPrayer = (t: Task, prayerId: PrayerId | undefined) => {
+    // задача блока показывается по дате — без даты она начинается сегодня
+    updateTask(t.id, prayerId ? { prayerId, date: t.date ?? todayISO } : { prayerId: undefined });
+    tasks.filter((c) => c.parentId === t.id).forEach((c) => updateTask(c.id, { prayerId }));
+    onClose();
+  };
+
+  const renderPrayer = (t: Task) =>
+  <>
+      {back}
+      <div className="-mx-3">
+        <SheetOption label="Без привязки" selected={!t.prayerId} onClick={() => bindPrayer(t, undefined)} />
+        {PRAYER_IDS.map((p) =>
+      <SheetOption key={p} label={prayerName(p)} selected={t.prayerId === p} onClick={() => bindPrayer(t, p)} />
+      )}
+      </div>
+    </>;
+
 
   const renderDate = (t: Task) =>
   <>
@@ -276,6 +309,8 @@ export function TaskActionSheet({ task, onClose }: TaskActionSheetProps) {
       renderDate(live) :
       view === 'move' ?
       renderMove(live) :
+      view === 'prayer' ?
+      renderPrayer(live) :
       renderParent(live) :
       null}
     </BottomSheet>);

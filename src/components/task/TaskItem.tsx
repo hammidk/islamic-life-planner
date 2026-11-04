@@ -24,6 +24,8 @@ export interface TaskItemLook {
   todayToggle?: boolean;
   /** раскрываемые пункты (списки дня) */
   checklist?: boolean;
+  /** без подписи намаза в мета-строке (список внутри блока намаза) */
+  hidePrayer?: boolean;
   /** кнопка «Переместить в раздел»; null — разделов нет */
   onMove?: ((task: Task) => void) | null;
 }
@@ -106,6 +108,7 @@ export function TaskItem({ task, look, drag, completing, onToggle, onMenu, onInd
           showPrefix={look.showPrefix}
           durationInMeta={look.durationInMeta}
           day={day}
+          hidePrayer={look.hidePrayer}
           checked={completing || undefined}
           onToggle={onToggle ? () => onToggle(task) : undefined}
           onOpen={(t) => startEdit(t.id)}
