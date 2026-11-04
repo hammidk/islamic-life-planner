@@ -62,7 +62,7 @@ describe('удаление дела и «Отменить»', () => {
     renderApp('/day/2026-11-03', { tasks: [makeTask('Позвонить', { date: '2026-11-03' })] });
     await user.click(deleteButtonOf('Позвонить'));
     expect(appState.tasks).toHaveLength(0);
-    expect(screen.getByRole('status').textContent).toContain('Дело удалено');
+    expect(screen.getByText('Дело удалено')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Отменить' }));
     expect(appState.tasks.map((t) => t.title)).toEqual(['Позвонить']);
   });
@@ -79,11 +79,11 @@ describe('удаление дела и «Отменить»', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Удалить' }));
 
     expect(appState.tasks.map((t) => t.title)).toEqual(['Другое']);
-    expect(screen.getByRole('status').textContent).toContain('Удалено дело и 1 подзадачу');
+    expect(screen.getByText('Удалено дело и 1 подзадачу')).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'Отменить' }));
     expect(appState.tasks.map((t) => t.title).sort()).toEqual(['Другое', 'Купить краску', 'Ремонт']);
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByText('Удалено дело и 1 подзадачу')).toBeNull();
     expect(screen.getByLabelText('Купить краску')).toBeTruthy();
   });
 

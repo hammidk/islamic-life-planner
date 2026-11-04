@@ -11,6 +11,7 @@ import {
   rubber } from
 '../utils/gestures';
 import type { Axis } from '../utils/gestures';
+import { clickSuppressed, isDragActive } from '../utils/dragState';
 
 /* ---------- одновременно открыта только одна строка ---------- */
 
@@ -134,6 +135,11 @@ export function useRowGestures({
   const dragBind = useDrag(
     ({ event, movement: [mx, my], velocity: [vx], direction: [dirx], last, cancel, canceled, tap, memo }) => {
       if (disabled || tap) return memo;
+      if (isDragActive()) {
+        if (x.get() !== 0) to(0);
+        cancel();
+        return memo;
+      }
       if ((event.target as HTMLElement | null)?.closest?.('[data-drag-handle]')) {
         cancel();
         return memo;
@@ -207,7 +213,8 @@ export function useRowGestures({
       }
       return { start, axis };
     },
-    { filterTaps: true, pointer: { touch: true }, enabled: !disabled }
+    // без захвата указателя: перетаскивание dnd-kit на той же строке получает свои события
+    { filterTaps: true, enabled: !disabled, pointer: { capture: false } }
   );
 
   // жест отменяется, если начал скроллиться родитель
@@ -268,7 +275,7 @@ export function useRowGestures({
       }),
       onPointerCancel: chain('onPointerCancel', () => cancelPress()),
       onClickCapture: (e: React.MouseEvent) => {
-        if (suppressClick.current) {
+        if (suppressClick.current || clickSuppressed()) {
           e.preventDefault();
           e.stopPropagation();
           suppressClick.current = false;

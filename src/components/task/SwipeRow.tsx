@@ -19,10 +19,12 @@ interface SwipeRowProps {
   onOutdent?: () => void;
   onLongPress: () => void;
   disabled?: boolean;
-  /** перетаскивание ведёт dnd-kit: долгое нажатие и подъём — его */
-  externalLongPress?: boolean;
-  /** строку подняло перетаскивание */
+  /** обработчики перетаскивания dnd-kit; с ними долгое нажатие — его */
+  dragListeners?: Record<string, (e: React.SyntheticEvent) => void>;
+  /** строка в руке — на месте бледная копия */
   dragging?: boolean;
+  /** при перетаскивании строка станет родителем */
+  nestTarget?: boolean;
   children: React.ReactNode;
 }
 
@@ -40,8 +42,9 @@ export function SwipeRow({
   onOutdent,
   onLongPress,
   disabled,
-  externalLongPress,
+  dragListeners,
   dragging = false,
+  nestTarget = false,
   children
 }: SwipeRowProps) {
   const actionsWidth = ACTION_WIDTH * (onOutdent ? 2 : 1);
@@ -53,16 +56,32 @@ export function SwipeRow({
     confirmDelete,
     onLongPress,
     disabled,
-    externalLongPress
+    externalLongPress: Boolean(dragListeners)
   });
   const indentOpacity = useTransform(x, [0, 16, 64], [0, 0.6, 1]);
   const actionsOpacity = useTransform(x, [-24, -4, 0], [1, 0.4, 0]);
   /** «Удалить» растягивается при полном свайпе */
   const deleteWidth = useTransform(x, (v) => Math.max(ACTION_WIDTH, -v - (onOutdent ? ACTION_WIDTH : 0)));
-  const up = lifted || dragging;
+  const up = lifted;
+
+  /** обработчики жестов и dnd-kit висят на одном элементе — вызываются оба */
+  const handlers: Record<string, unknown> = bind();
+  if (dragListeners) {
+    Object.entries(dragListeners).forEach(([name, fn]) => {
+      const own = handlers[name] as ((e: React.SyntheticEvent) => void) | undefined;
+      handlers[name] = (e: React.SyntheticEvent) => {
+        fn(e);
+        own?.(e);
+      };
+    });
+  }
 
   return (
-    <div ref={rootRef} className="relative overflow-hidden rounded-xl">
+    <div
+      ref={rootRef}
+      className={`relative overflow-hidden rounded-xl transition-opacity duration-150 ${dragging ? 'opacity-40' : ''} ${
+      nestTarget ? 'ring-2 ring-primary' : ''}`
+      }>
       <motion.div
         style={{ opacity: actionsOpacity }}
         className="absolute inset-0 flex justify-end"
@@ -112,7 +131,7 @@ export function SwipeRow({
       null}
 
       <motion.div
-        {...bind()}
+        {...handlers}
         data-row-id={id}
         aria-label={label}
         animate={{
@@ -124,6 +143,11 @@ export function SwipeRow({
         className={`row-gesture relative ${surface}`}>
 
         {children}
+        {nestTarget ?
+        <span className="pointer-events-none absolute right-2 top-1 rounded-full bg-primary px-2 py-0.5 text-[11px] font-medium text-white">
+            Сделать подзадачей
+          </span> :
+        null}
       </motion.div>
     </div>);
 

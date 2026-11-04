@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { CalendarCheckIcon, CalendarPlusIcon, ChevronDownIcon, FolderInputIcon } from 'lucide-react';
-import type { DragControls } from 'framer-motion';
 import { TaskRow } from '../TaskRow';
 import { Checklist } from '../Checklist';
 import { SwipeRow } from './SwipeRow';
-import { DragHandle } from './DragHandle';
+import type { DragRowState } from './SortableList';
 import { InlineEdit } from './InlineEdit';
 import { useApp } from '../../contexts/AppContext';
 import { useQuickAdd } from '../../contexts/QuickAddContext';
@@ -32,7 +31,8 @@ export interface TaskItemLook {
 interface TaskItemProps {
   task: Task;
   look: TaskItemLook;
-  controls?: DragControls;
+  /** перетаскивание из SortableList */
+  drag?: DragRowState;
   /** временная отметка до автоскрытия */
   completing?: boolean;
   onToggle?: (task: Task) => void;
@@ -67,7 +67,7 @@ function TodayToggle({ task }: {task: Task;}) {
 }
 
 /** Одна строка дела на всех экранах: жесты, правка на месте, пункты */
-export function TaskItem({ task, look, controls, completing, onToggle, onMenu, onIndent, onOutdent, parentTitle }: TaskItemProps) {
+export function TaskItem({ task, look, drag, completing, onToggle, onMenu, onIndent, onOutdent, parentTitle }: TaskItemProps) {
   const { checklists, tasks } = useApp();
   const { editingId, startEdit } = useQuickAdd();
   const remove = useTaskDelete();
@@ -89,7 +89,10 @@ export function TaskItem({ task, look, controls, completing, onToggle, onMenu, o
         onDelete={() => void remove(task)}
         confirmDelete={hasChildren}
         onIndent={onIndent}
-        onOutdent={onOutdent}>
+        onOutdent={onOutdent}
+        dragListeners={drag?.dragListeners}
+        dragging={drag?.isDragging}
+        nestTarget={drag?.nestTarget}>
 
         {parentTitle ?
         <p className="-mb-2.5 truncate pl-[35px] pt-2 text-[11.5px] text-muted">↳ {parentTitle}</p> :
@@ -136,7 +139,6 @@ export function TaskItem({ task, look, controls, completing, onToggle, onMenu, o
 
                 </button> :
             null}
-              {controls ? <DragHandle controls={controls} label={task.title} /> : null}
             </span>
           } />
 
