@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ListTodoIcon } from 'lucide-react';
+import { ListTodoIcon, PlusIcon } from 'lucide-react';
 import { WeatherIcon } from '../components/WeatherIcon';
 import { Shell } from '../components/Shell';
 import { PrayerTimeline } from '../components/PrayerTimeline';
-import { SphereIcon } from '../components/SphereIcon';
+import { SphereCardBody, SPHERE_CARD_CLASS } from '../components/sphere/SphereCard';
+import { SphereEditorSheet } from '../components/sphere/SphereEditorSheet';
+import { MAX_CUSTOM_SPHERES } from '../data/spheres';
 import { LocationBanner } from '../components/LocationBanner';
 import { WeekSwiper } from '../components/WeekSwiper';
 import { ProfileButton } from '../components/ProfileButton';
@@ -24,7 +26,8 @@ const tasksWord = (count: number): string => {
 
 export function Home() {
   const navigate = useNavigate();
-  const { tasks } = useApp();
+  const { tasks, customSpheres } = useApp();
+  const [creating, setCreating] = React.useState(false);
   const { spheres, getSphere } = useSpheres();
   const { minutes, todayISO, todayFullLabel, hijriLabel, weather } = useLive();
 
@@ -100,18 +103,27 @@ export function Home() {
                   type="button"
                   onClick={() => navigate(`/sphere/${sphere.id}`)}
                   aria-label={`${sphere.name}, дел: ${count}`}
-                  className="flex h-[68px] w-[92px] flex-col justify-between rounded-xl border border-line bg-surface px-2.5 py-2 text-left shadow-card transition-colors duration-150 ease-out hover:border-primary/40">
+                  className={SPHERE_CARD_CLASS}>
                   
-                  <span className="flex w-full items-center justify-between">
-                    <SphereIcon id={sphere.id} color={sphere.color} className="h-[16px] w-[16px]" />
-                    <span className="text-[14px] font-medium tabular-nums text-ink-soft">{count}</span>
-                  </span>
-                  <span className="line-clamp-2 text-[12.5px] font-semibold leading-tight text-ink">{sphere.name}</span>
+                  <SphereCardBody id={sphere.id} name={sphere.name} color={sphere.color} count={count} />
                 </button>
               </li>);
 
           })}
+          {customSpheres.length < MAX_CUSTOM_SPHERES ?
+          <li className="shrink-0 snap-start">
+              <button
+              type="button"
+              onClick={() => setCreating(true)}
+              className="flex h-[68px] w-[92px] flex-col items-start justify-between rounded-xl border border-dashed border-line px-2.5 py-2 text-left text-muted transition-colors duration-150 ease-out hover:border-primary/40 hover:text-primary">
+              
+                <PlusIcon className="h-[16px] w-[16px]" strokeWidth={2} aria-hidden="true" />
+                <span className="text-[12.5px] font-semibold leading-tight">Добавить сферу</span>
+              </button>
+            </li> :
+          null}
         </ul>
+        <SphereEditorSheet open={creating} onClose={() => setCreating(false)} />
       </section>
 
       <WeekSwiper />

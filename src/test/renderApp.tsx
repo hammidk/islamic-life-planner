@@ -10,19 +10,29 @@ import { SphereDetail } from '../pages/SphereDetail';
 import { SectionDetail } from '../pages/SectionDetail';
 import { TaskDetail } from '../pages/TaskDetail';
 import { Journal } from '../pages/Journal';
-import type { ChecklistItem, Section, Task } from '../types';
+import type { ChecklistItem, CustomSphere, Section, Task } from '../types';
 import type { BlockPlacement } from '../utils/blockPlacement';
 
 /** Последнее состояние приложения — чтобы проверять, что дела действительно созданы */
-export const appState: {tasks: Task[];checklists: Record<string, ChecklistItem[]>;blockPlacement: BlockPlacement;} = {
+export const appState: {
+  tasks: Task[];
+  sections: Section[];
+  checklists: Record<string, ChecklistItem[]>;
+  blockPlacement: BlockPlacement;
+  customSpheres: CustomSphere[];
+} = {
   tasks: [],
+  sections: [],
   checklists: {},
-  blockPlacement: {}
+  blockPlacement: {},
+  customSpheres: []
 };
 
 function Probe() {
-  const { tasks, checklists, blockPlacement } = useApp();
+  const { tasks, sections, checklists, blockPlacement, customSpheres } = useApp();
   appState.tasks = tasks;
+  appState.sections = sections;
+  appState.customSpheres = customSpheres;
   appState.checklists = checklists;
   appState.blockPlacement = blockPlacement;
   return null;
@@ -42,14 +52,15 @@ export const makeTask = (title: string, patch: Partial<Task> = {}): Task => ({
 /** Настоящие экраны приложения с данными пользователя в памяти */
 export function renderApp(
 route: string,
-data: {tasks?: Task[];sections?: Section[];checklists?: Record<string, ChecklistItem[]>;blockPlacement?: BlockPlacement;} = {})
+data: {tasks?: Task[];sections?: Section[];checklists?: Record<string, ChecklistItem[]>;blockPlacement?: BlockPlacement;customSpheres?: CustomSphere[];} = {})
 {
   const initial = {
     ...emptySnapshot(),
     tasks: data.tasks ?? [],
     sections: data.sections ?? [],
     checklists: data.checklists ?? {},
-    blockPlacement: data.blockPlacement
+    blockPlacement: data.blockPlacement,
+    customSpheres: data.customSpheres
   };
   return render(
     <AppProvider userId="test-user" initial={initial} needsUpload={false} offline={false}>
