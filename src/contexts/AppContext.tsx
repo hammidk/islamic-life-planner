@@ -22,6 +22,7 @@ import {
 import { HISTORY_DAYS, rollHabit, toggleHabitToday } from '../utils/habits';
 import { saveUserData } from '../utils/userData';
 import type { UserSnapshot } from '../utils/userData';
+import type { BlockPlacement, BlockSpot, MovableBlock } from '../utils/blockPlacement';
 import type {
   ChecklistItem,
   Goal,
@@ -68,6 +69,8 @@ interface AppState {
   updateTask: (id: string, patch: Partial<Omit<Task, 'id'>>) => void;
   /** удаляет задачу вместе с её подзадачами */
   deleteTask: (id: string) => void;
+  /** возвращает удалённые дела (отмена удаления) */
+  restoreTasks: (list: Task[]) => void;
   /** сохраняет ручной порядок: ids в новом порядке */
   reorderTasks: (ids: string[]) => void;
   toggleTask: (id: string) => void;
@@ -82,6 +85,10 @@ interface AppState {
   sphereSlots: Partial<Record<SphereId, SphereSlot>>;
   /** null — убрать сферу из расписания */
   setSphereSlot: (sphere: SphereId, slot: SphereSlot | null) => void;
+  /** положение «Удела»/«Прочего» на «Сегодня» по датам */
+  blockPlacement: BlockPlacement;
+  /** null — вернуть блок на автоматическое место */
+  setBlockPlacement: (date: string, sphere: MovableBlock, spot: BlockSpot | null) => void;
   prayersDone: Record<string, boolean>;
   /** отметки намазов по датам: { 'YYYY-MM-DD': { fajr: true } } */
   prayersByDate: Record<string, Record<string, boolean>>;
@@ -137,6 +144,7 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
   const [sphereSlots, setSphereSlots] = useState<Partial<Record<SphereId, SphereSlot>>>(
     initial.sphereSlots
   );
+  const [blockPlacement, setBlockPlacementState] = useState<BlockPlacement>(initial.blockPlacement ?? {});
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(offline ? 'offline' : 'saved');
 
   const prayersDone = useMemo(
@@ -161,9 +169,10 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
       journal: journalRaw,
       checklists,
       prayersByDate,
-      sphereSlots
+      sphereSlots,
+      blockPlacement
     }),
-    [tasks, sections, habits, goals, journalRaw, checklists, prayersByDate, sphereSlots]
+    [tasks, sections, habits, goals, journalRaw, checklists, prayersByDate, sphereSlots, blockPlacement]
   );
 
   const snapshotRef = useRef(snapshot);
@@ -369,6 +378,18 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     });
   }, []);
 
+  const setBlockPlacement = useCallback((date: string, sphere: MovableBlock, spot: BlockSpot | null) => {
+    setBlockPlacementState((prev) => {
+      const day = { ...(prev[date] ?? {}) };
+      if (spot) day[sphere] = spot;else
+      delete day[sphere];
+      const next = { ...prev };
+      if (Object.keys(day).length > 0) next[date] = day;else
+      delete next[date];
+      return next;
+    });
+  }, []);
+
   const deleteTask = useCallback((id: string) => {
     setTasks((prev) => {
       const removed = new Set([id]);
@@ -383,6 +404,13 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
         });
       }
       return prev.filter((t) => !removed.has(t.id));
+    });
+  }, []);
+
+  const restoreTasks = useCallback((list: Task[]) => {
+    setTasks((prev) => {
+      const ids = new Set(prev.map((t) => t.id));
+      return [...prev, ...list.filter((t) => !ids.has(t.id))];
     });
   }, []);
 
@@ -473,6 +501,7 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     addSection,
     updateTask,
     deleteTask,
+    restoreTasks,
     reorderTasks,
     toggleTask,
     checklists,
@@ -482,6 +511,8 @@ export function AppProvider({ children, userId, initial, needsUpload, offline }:
     removeChecklistItem,
     sphereSlots,
     setSphereSlot,
+    blockPlacement,
+    setBlockPlacement,
     prayersDone,
     prayersByDate,
     togglePrayer,

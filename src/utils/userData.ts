@@ -9,6 +9,9 @@ import type {
   SphereSlot,
   Task } from
 '../types';
+import { prunePlacement } from './blockPlacement';
+import type { BlockPlacement } from './blockPlacement';
+import { todayISO } from './prayer';
 
 /** Всё, что принадлежит пользователю и сохраняется в облаке */
 export interface UserSnapshot {
@@ -22,6 +25,8 @@ export interface UserSnapshot {
   prayersByDate: Record<string, Record<string, boolean>>;
   /** время сфер в ежедневном расписании; в старых снимках поля нет */
   sphereSlots: Partial<Record<SphereId, SphereSlot>>;
+  /** перенесённые на «Сегодня» блоки «Удел»/«Прочее» по датам; в старых снимках поля нет */
+  blockPlacement?: BlockPlacement;
 }
 
 interface StoredSnapshot {
@@ -106,7 +111,9 @@ function normalize(raw: unknown): UserSnapshot | null {
     prayersByDate: isRecord(raw.prayersByDate) ?
     raw.prayersByDate as Record<string, Record<string, boolean>> :
     {},
-    sphereSlots: normalizeSlots(raw.sphereSlots)
+    sphereSlots: normalizeSlots(raw.sphereSlots),
+    // действует только сегодня; записи старше 7 дней чистятся
+    blockPlacement: prunePlacement(raw.blockPlacement, todayISO())
   };
 }
 

@@ -11,14 +11,20 @@ import { SectionDetail } from '../pages/SectionDetail';
 import { TaskDetail } from '../pages/TaskDetail';
 import { Journal } from '../pages/Journal';
 import type { ChecklistItem, Section, Task } from '../types';
+import type { BlockPlacement } from '../utils/blockPlacement';
 
 /** Последнее состояние приложения — чтобы проверять, что дела действительно созданы */
-export const appState: {tasks: Task[];checklists: Record<string, ChecklistItem[]>;} = { tasks: [], checklists: {} };
+export const appState: {tasks: Task[];checklists: Record<string, ChecklistItem[]>;blockPlacement: BlockPlacement;} = {
+  tasks: [],
+  checklists: {},
+  blockPlacement: {}
+};
 
 function Probe() {
-  const { tasks, checklists } = useApp();
+  const { tasks, checklists, blockPlacement } = useApp();
   appState.tasks = tasks;
   appState.checklists = checklists;
+  appState.blockPlacement = blockPlacement;
   return null;
 }
 
@@ -36,13 +42,14 @@ export const makeTask = (title: string, patch: Partial<Task> = {}): Task => ({
 /** Настоящие экраны приложения с данными пользователя в памяти */
 export function renderApp(
 route: string,
-data: {tasks?: Task[];sections?: Section[];checklists?: Record<string, ChecklistItem[]>;} = {})
+data: {tasks?: Task[];sections?: Section[];checklists?: Record<string, ChecklistItem[]>;blockPlacement?: BlockPlacement;} = {})
 {
   const initial = {
     ...emptySnapshot(),
     tasks: data.tasks ?? [],
     sections: data.sections ?? [],
-    checklists: data.checklists ?? {}
+    checklists: data.checklists ?? {},
+    blockPlacement: data.blockPlacement
   };
   return render(
     <AppProvider userId="test-user" initial={initial} needsUpload={false} offline={false}>

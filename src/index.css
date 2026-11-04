@@ -29,3 +29,15 @@ body {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
+/* строка дела с жестами: без выделения текста и системной лупы/меню на долгом нажатии */
+.row-gesture,
+.row-gesture * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.row-gesture {
+  touch-action: pan-y;
+}

@@ -1,8 +1,9 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useDragControls } from 'framer-motion';
-import type { PanInfo } from 'framer-motion';
-import { ChevronDownIcon, GripVerticalIcon } from 'lucide-react';
+import { useDraggable } from '@dnd-kit/core';
+import { ChevronDownIcon, MoreHorizontalIcon } from 'lucide-react';
+import { PopoverMenu } from '../ui/PopoverMenu';
+import { clickSuppressed } from '../../utils/dragState';
 import { DayTaskList } from '../DayTaskList';
 import { SphereIcon } from '../SphereIcon';
 import { useApp } from '../../contexts/AppContext';
@@ -20,13 +21,13 @@ interface TodaySphereListProps {
   tasks: Task[];
   /** «Удел» со временем в расписании — стоит на своём месте, без ручки */
   slot?: {start: number;end: number;};
-  /** блок сейчас переносится (режим выбора окна) */
-  moving?: boolean;
-  /** тап по ручке без перетаскивания — режим переноса вкл/выкл */
-  onToggleMove?: () => void;
-  onDragStart?: () => void;
-  /** отпущен после перетаскивания: точка в координатах страницы */
-  onDrop?: (point: {x: number;y: number;}) => void;
+  /** блок можно переносить: долгое нажатие на заголовок и меню «⋯» */
+  movable?: boolean;
+  /** пункты меню «⋯»: undefined — пункта нет */
+  onUp?: () => void;
+  onDown?: () => void;
+  /** «Вернуть на место» — только если блок перенесён сегодня */
+  onReset?: () => void;
 }
 
 function NestedSection({
@@ -79,53 +80,61 @@ function NestedSection({
 /**
  * «Удел» или «Прочее» на «Сегодня»: сворачивается по шеврону (состояние запоминается),
  * заголовок ведёт на страницу сферы. У «Удела» внутри: дела без раздела, затем разделы.
- * Ручка: перетаскивание в другое окно или тап — режим переноса с зонами вставки.
+ * Перенос: долгое нажатие на заголовок и перетаскивание или меню «⋯» (Поднять / Опустить /
+ * Вернуть на место). Положение действует только сегодня.
  */
 export function TodaySphereList({
   sphereId,
   tasks,
   slot,
-  moving = false,
-  onToggleMove,
-  onDragStart,
-  onDrop
+  movable = false,
+  onUp,
+  onDown,
+  onReset
 }: TodaySphereListProps) {
   const navigate = useNavigate();
   const { sections } = useApp();
-  const dragControls = useDragControls();
-  const draggedRef = useRef(false);
   const [collapsed, toggle] = usePersistentFlag(`ilp.today.collapsed.${sphereId}`, false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
   const sphere = spheres.find((s) => s.id === sphereId) ?? spheres[spheres.length - 1];
   const surface = slot ? RIZQ_SLOT_SURFACE : 'bg-canvas';
+  const draggable = movable && !slot;
+  const { setNodeRef, setActivatorNodeRef, listeners, isDragging } = useDraggable({
+    id: `block:${sphereId}`,
+    disabled: !draggable
+  });
 
   const ownSections = sphereId === 'rizq' ? sections.filter((s) => s.sphere === 'rizq') : [];
   const sectionIds = new Set(ownSections.map((s) => s.id));
   const unsectioned = tasks.filter((t) => !t.sectionId || !sectionIds.has(t.sectionId));
-  const draggable = !slot && Boolean(onDrop);
+
+  const menuItems = [
+  ...(onUp ? [{ key: 'up', label: 'Поднять' }] : []),
+  ...(onDown ? [{ key: 'down', label: 'Опустить' }] : []),
+  ...(onReset ? [{ key: 'reset', label: 'Вернуть на место' }] : [])];
+
 
   return (
-    <motion.div
-      drag={draggable ? 'y' : false}
-      dragControls={dragControls}
-      dragListener={false}
-      dragSnapToOrigin
-      dragMomentum={false}
-      onDragStart={() => {
-        draggedRef.current = true;
-        onDragStart?.();
-      }}
-      onDragEnd={(_: unknown, info: PanInfo) => {
-        onDrop?.(info.point);
-        window.setTimeout(() => {
-          draggedRef.current = false;
-        }, 0);
-      }}
-      whileDrag={{ scale: 1.02, boxShadow: '0 10px 24px rgba(29, 33, 30, 0.14)', zIndex: 30 }}
-      className={`relative ${slot ? `-mx-5 px-5 ${RIZQ_SLOT_SURFACE}` : 'bg-canvas'} ${
-      moving ? 'rounded-xl ring-2 ring-primary/40' : ''}`
+    <div
+      ref={setNodeRef}
+      data-plan-id={`list:${sphereId}`}
+      className={`relative transition-opacity duration-150 ${slot ? `-mx-5 px-5 ${RIZQ_SLOT_SURFACE}` : 'bg-canvas'} ${
+      isDragging ? 'opacity-40' : ''}`
       }>
 
-      <div className="flex items-center gap-1.5 py-2">
+      <div
+        ref={draggable ? setActivatorNodeRef : undefined}
+        {...(draggable ? listeners : {})}
+        onClickCapture={(e) => {
+          // после перетаскивания тап по заголовку не срабатывает
+          if (clickSuppressed()) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+        onContextMenu={(e) => draggable && e.preventDefault()}
+        className={`flex items-center gap-1.5 py-2 ${draggable ? 'row-gesture' : ''}`}>
         <button
           type="button"
           onClick={toggle}
@@ -155,27 +164,31 @@ export function TodaySphereList({
             null}
           </span>
         </button>
-        {draggable ?
+        {draggable && menuItems.length > 0 ?
         <button
+          ref={menuRef}
           type="button"
-          aria-label={moving ? `Отменить перенос «${sphere.name}»` : `Перенести «${sphere.name}» в другое окно`}
-          aria-pressed={moving}
-          onPointerDown={(e) => {
-            draggedRef.current = false;
-            dragControls.start(e);
-          }}
-          onClick={() => {
-            if (!draggedRef.current) onToggleMove?.();
-          }}
-          style={{ touchAction: 'none' }}
-          className={`flex h-8 w-8 shrink-0 cursor-grab items-center justify-center rounded-lg transition-colors duration-150 ease-out active:cursor-grabbing ${
-          moving ? 'bg-primary-tint text-primary' : 'text-muted/70 hover:text-ink-soft'}`
-          }>
+          onClick={() => setMenuOpen(true)}
+          aria-label={`Переместить «${sphere.name}»`}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-150 ease-out hover:bg-line/60 hover:text-ink-soft">
 
-            <GripVerticalIcon className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+            <MoreHorizontalIcon className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
           </button> :
         null}
       </div>
+
+      <PopoverMenu
+        open={menuOpen}
+        anchor={menuRef.current}
+        items={menuItems}
+        label={`Переместить «${sphere.name}»`}
+        onClose={() => setMenuOpen(false)}
+        onSelect={(key) => {
+          setMenuOpen(false);
+          if (key === 'up') onUp?.();else
+          if (key === 'down') onDown?.();else
+          onReset?.();
+        }} />
 
       {!collapsed ?
       <div className="pb-1 pl-[26px]">
@@ -193,6 +206,6 @@ export function TodaySphereList({
         )}
         </div> :
       null}
-    </motion.div>);
+    </div>);
 
 }
