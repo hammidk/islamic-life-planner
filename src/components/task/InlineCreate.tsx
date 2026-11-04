@@ -9,18 +9,24 @@ import { useOutsideTap } from '../../hooks/useOutsideTap';
  * Enter создаёт дело и открывает новую пустую карточку с тем же контекстом;
  * тап вне карточки создаёт дело (если есть название) и закрывает её.
  */
-export function InlineCreate() {
-  const { mode, commitInline, closeInline, expandDraft } = useQuickAdd();
+export function InlineCreate({ slot = 'page', lockedChip }: {
+  /** место карточки: 'page' — вверху списка экрана, иначе — там, где стоит этот InlineCreate */
+  slot?: string;
+  /** неснимаемый чип, например «К намазу: Аср» */
+  lockedChip?: string;
+} = {}) {
+  const { mode, inlineSlot, commitInline, closeInline, expandDraft } = useQuickAdd();
   const { draft, updateDraft } = useTaskDraft();
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const open = mode === 'inline';
+  const open = mode === 'inline' && inlineSlot === slot;
   const titleRef = useRef(draft.title);
   titleRef.current = draft.title;
 
   useEffect(() => {
     if (!open) return;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (slot === 'page') window.scrollTo({ top: 0, behavior: 'smooth' });else
+    rootRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     inputRef.current?.focus({ preventScroll: true });
   }, [open]);
 
@@ -49,6 +55,7 @@ export function InlineCreate() {
           repeat: draft.repeat,
           reminder: draft.reminder
         }}
+        lockedChip={lockedChip}
         onChange={(patch) => updateDraft(patch)}
         onSubmit={() => {
           // пустое название: ничего не создаём, карточка и клавиатура остаются

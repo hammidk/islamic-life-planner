@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { CalendarIcon, InfoIcon, Repeat2Icon, TimerIcon } from 'lucide-react';
+import { CalendarIcon, InfoIcon, MoonStarIcon, Repeat2Icon, TimerIcon } from 'lucide-react';
 import { SphereIcon } from '../SphereIcon';
 import { PopoverMenu } from '../ui/PopoverMenu';
 import { DateTimeScreen } from './DateTimeScreen';
@@ -42,6 +42,8 @@ interface TaskComposerProps {
   placeholder?: string;
   /** кружок слева: для существующего дела — его состояние */
   done?: boolean;
+  /** неснимаемый чип первым в ряду: «К намазу: Аср» */
+  lockedChip?: string;
 }
 
 /** Чип — только иконка; выбранное значение показывается текстом рядом */
@@ -94,7 +96,8 @@ export function TaskComposer({
   inputRef,
   autoFocus = true,
   placeholder = 'Новое дело',
-  done = false
+  done = false,
+  lockedChip
 }: TaskComposerProps) {
   const [sheet, setSheet] = useState<SheetKind>(null);
   const [dateMenu, setDateMenu] = useState(false);
@@ -201,6 +204,14 @@ export function TaskComposer({
 
 
       <div className="no-scrollbar -mx-1 mt-3 flex flex-nowrap gap-2 overflow-x-auto px-1 pl-[34px]">
+        {lockedChip ?
+        <span
+          className="flex h-[34px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-primary/40 bg-primary-tint px-3 text-[13px] text-primary">
+          
+            <MoonStarIcon className={iconClass} strokeWidth={1.9} aria-hidden="true" />
+            {lockedChip}
+          </span> :
+        null}
         <Chip
           chipRef={dateChipRef}
           icon={<CalendarIcon className={iconClass} strokeWidth={1.9} aria-hidden="true" />}

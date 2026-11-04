@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useState } from 'react';
 import type { Reminder, RepeatRule, SphereId } from '../types';
+import type { PrayerId } from '../data/appData';
 
 /** Черновик новой задачи — общий для быстрого листа и экрана «Подробно» */
 export interface TaskDraft {
@@ -18,6 +19,8 @@ export interface TaskDraft {
   urgent?: boolean;
   intention: string;
   result: string;
+  /** задача блока намаза: чип «К намазу» в карточке не снимается */
+  prayerId?: PrayerId;
   /** подпункты будущего дела; id — только для правки в черновике */
   checklist: {id: string;title: string;}[];
 }

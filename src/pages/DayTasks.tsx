@@ -137,8 +137,11 @@ function TodayView({ date }: {date: string;}) {
   const todayEntry = journal.find((e) => e.date === date);
   const { next, until } = getPrayerState(minutes);
 
-  /** вхождения дня: повторяющиеся дела — по правилу повтора */
-  const dayTasks = tasks.filter((t) => occursOn(t, date));
+  /**
+   * вхождения дня: повторяющиеся дела — по правилу повтора. Задачи намазов (prayerId) живут
+   * только в блоке своего намаза: не строки окон и не занимают время в «Свободно»
+   */
+  const dayTasks = tasks.filter((t) => !t.prayerId && occursOn(t, date));
   const timed = dayTasks.filter((t) => t.time);
   /**
    * История: выполненные сегодня — у повторов выполненное вхождение дня,
@@ -157,6 +160,7 @@ function TodayView({ date }: {date: string;}) {
   filter(
     (t) =>
     t.sphere === sphere &&
+    !t.prayerId &&
     !t.time && (
     isRepeating(t) ? isOpenOn(t, date) : t.status === 'open' && (!t.date || occursOn(t, date)))
   ).
@@ -290,6 +294,7 @@ function TodayView({ date }: {date: string;}) {
             w,
             <PrayerRow
               id={w.id}
+              day={date}
               name={w.name}
               time={w.timeLabel}
               hint={w.id === 'fajr' && sunrise ? `восход ${sunrise}` : undefined}

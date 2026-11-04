@@ -1,13 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
-import { CheckIcon, ChevronDownIcon } from 'lucide-react';
-import { Checklist } from './Checklist';
+import { CheckIcon, ChevronDownIcon, PlusIcon } from 'lucide-react';
+import { DayTaskList } from './DayTaskList';
+import { InlineCreate } from './task/InlineCreate';
 import { useApp } from '../contexts/AppContext';
+import { useQuickAdd } from '../contexts/QuickAddContext';
 import { prayerChecklistSuggestions } from '../data/taskValues';
+import { isPrayerId, prayerName } from '../data/appData';
+import { isDoneOn, isOpenOn, occursOn } from '../utils/occurrence';
+import { compareOrder } from '../utils/taskOptions';
 
 interface PrayerRowProps {
   id: string;
   name: string;
   time: string;
+  /** день расписания, YYYY-MM-DD — задачи блока и отметки вхождений относятся к нему */
+  day: string;
   /** дополнительная подпись, например время восхода */
   hint?: string;
   isCurrent?: boolean;
@@ -21,14 +28,25 @@ const HIDE_DELAY = 450;
 /**
  * Намаз в хронологии дня: сплошной блок от края до края экрана (компенсирует отступ Shell).
  * Отмеченный намаз исчезает из списка — отметка остаётся в prayersDone.
+ * Внутри — задачи этого намаза (prayerId) на этот день: создаются той же карточкой,
+ * что и обычные дела, с неснимаемым чипом «К намазу».
  */
-export function PrayerRow({ id, name, time, hint, isCurrent = false, isLate = false }: PrayerRowProps) {
-  const { togglePrayer, checklists } = useApp();
+export function PrayerRow({ id, name, time, day, hint, isCurrent = false, isLate = false }: PrayerRowProps) {
+  const { togglePrayer, tasks, addTask } = useApp();
+  const { openInline } = useQuickAdd();
   const [open, setOpen] = useState(false);
   const [marking, setMarking] = useState(false);
   const timer = useRef<number | undefined>(undefined);
-  const items = checklists[id] ?? [];
-  const doneItems = items.filter((i) => i.done).length;
+  const prayerId = isPrayerId(id) ? id : null;
+  const slot = `prayer:${id}`;
+
+  /** все задачи блока, которые есть в этот день; в списке — ещё не выполненные */
+  const dayTasks = prayerId ? tasks.filter((t) => t.prayerId === prayerId && occursOn(t, day)) : [];
+  const openTasks = dayTasks.filter((t) => isOpenOn(t, day)).sort(compareOrder);
+  const doneCount = dayTasks.filter((t) => isDoneOn(t, day)).length;
+  const suggestions = prayerChecklistSuggestions.filter(
+    (s) => !dayTasks.some((t) => t.title.toLowerCase() === s.toLowerCase())
+  );
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
@@ -74,12 +92,12 @@ export function PrayerRow({ id, name, time, hint, isCurrent = false, isLate = fa
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          aria-label={open ? `Скрыть пункты: ${name}` : `Показать пункты: ${name}`}
+          aria-label={open ? `Скрыть дела: ${name}` : `Показать дела: ${name}`}
           className="flex shrink-0 items-center gap-1 rounded-full px-1.5 py-1 text-[12px] text-white/85 transition-colors duration-150 ease-out hover:bg-white/10">
 
-          {items.length > 0 ?
+          {dayTasks.length > 0 ?
           <span className="tabular-nums">
-              {doneItems}/{items.length}
+              {doneCount}/{dayTasks.length}
             </span> :
           null}
           <ChevronDownIcon
@@ -89,16 +107,37 @@ export function PrayerRow({ id, name, time, hint, isCurrent = false, isLate = fa
 
         </button>
       </div>
-      {open ?
-      <div className="mt-2 pl-[34px]">
-          <Checklist
-          targetId={id}
-          suggestions={prayerChecklistSuggestions}
-          tone="onPrimary"
-          // непрозрачный цвет карточки с белым 10% — строки закрывают слой действий свайпа
-          surface={isLate ? 'bg-[#BC574E]' : 'bg-[#356A57]'}
-          allowNesting
-          allowNote /> 
+      {open && prayerId ?
+      <div className="mt-2 rounded-xl bg-canvas px-3 py-1 text-ink">
+          <div className="pt-2">
+            <InlineCreate slot={slot} lockedChip={`К намазу: ${prayerName(prayerId)}`} />
+          </div>
+          {openTasks.length > 0 ?
+        <DayTaskList tasks={openTasks} divider="divide-line" surface="bg-canvas" showDate={false} day={day} hideDone /> :
+        null}
+          {suggestions.length > 0 ?
+        <div className="flex flex-wrap gap-1.5 pb-1 pt-2">
+              {suggestions.map((s) =>
+          <button
+            key={s}
+            type="button"
+            // подсказка создаёт настоящую задачу блока, как карточка
+            onClick={() => addTask({ title: s, prayerId, sphere: 'faith', date: day })}
+            className="rounded-full border border-line bg-surface px-2.5 py-1 text-[12.5px] text-ink-soft transition-colors duration-150 ease-out hover:border-primary/40">
+
+                  + {s}
+                </button>
+          )}
+            </div> :
+        null}
+          <button
+          type="button"
+          onClick={() => openInline({ prayerId, sphere: 'faith', date: day }, slot)}
+          className="flex min-h-[44px] items-center gap-1 text-[13px] font-medium text-primary">
+
+            <PlusIcon className="h-3.5 w-3.5" strokeWidth={2.2} aria-hidden="true" />
+            добавить задачу
+          </button>
         </div> :
       null}
     </div>);
