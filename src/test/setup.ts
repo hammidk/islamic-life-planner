@@ -18,10 +18,10 @@ vi.mock('../contexts/AuthContext', () => ({
 
 export const TEST_TODAY = '2026-11-03';
 
-export const testLive: LiveSnapshot = buildSnapshot({
+const liveFor = (todayISO: string, minutes: number): LiveSnapshot => buildSnapshot({
   location: { city: 'Тест', lat: 0, lon: 0, tz: 'UTC', confirmed: true } as LiveSnapshot['location'],
-  todayISO: TEST_TODAY,
-  minutes: 10 * 60,
+  todayISO,
+  minutes,
   timings: {
     fajr: '06:18',
     sunrise: '07:50',
@@ -33,7 +33,19 @@ export const testLive: LiveSnapshot = buildSnapshot({
   },
   status: 'ready'
 });
+
+export const testLive: LiveSnapshot = liveFor(TEST_TODAY, 10 * 60);
 setLiveSnapshot(testLive);
+
+/**
+ * Переводит «сегодня» приложения (живые данные) и системные часы на другую дату.
+ * После теста всё возвращается к TEST_TODAY.
+ */
+export function setTestDay(iso: string, minutes = 10 * 60): void {
+  Object.assign(testLive, liveFor(iso, minutes));
+  setLiveSnapshot(testLive);
+  vi.setSystemTime(new Date(`${iso}T${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}:00`));
+}
 
 vi.mock('../contexts/LiveDataContext', () => ({
   useLive: () => ({
@@ -79,6 +91,9 @@ w.IntersectionObserver = w.IntersectionObserver ?? NoopObserver;
 
 afterEach(() => {
   cleanup();
+  Object.assign(testLive, liveFor(TEST_TODAY, 10 * 60));
+  setLiveSnapshot(testLive);
+  vi.useRealTimers();
   try {
     localStorage.clear();
   } catch {
