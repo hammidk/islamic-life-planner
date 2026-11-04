@@ -6,6 +6,8 @@ import { TaskItem } from './TaskItem';
 import type { TaskItemLook } from './TaskItem';
 import { TaskRow } from '../TaskRow';
 import { useApp } from '../../contexts/AppContext';
+import { useLive } from '../../contexts/LiveDataContext';
+import { isDoneOn } from '../../utils/occurrence';
 import { useTaskTree } from '../../hooks/useTaskTree';
 import { buildTaskTree, canMoveUnder } from '../../utils/taskTree';
 import type { TaskNode } from '../../utils/taskTree';
@@ -19,29 +21,34 @@ interface TaskListProps {
   divider?: string;
   /** выполненные дела исчезают из списка после короткой паузы */
   hideDone?: boolean;
+  /** день списка: отметка повторяющегося дела — вхождение этого дня (по умолчанию сегодня) */
+  day?: string;
 }
 
 /**
  * Список дел на любом экране: подзадачи под родителем (отступ 28 px, линия слева),
  * свайпы, долгое нажатие, перетаскивание (дело переезжает вместе с подзадачами).
  */
-export function TaskList({ tasks, look, divider = 'divide-line', hideDone = false }: TaskListProps) {
+export function TaskList({ tasks, look, divider = 'divide-line', hideDone = false, day }: TaskListProps) {
   const { tasks: all, toggleTask, reorderTasks } = useApp();
   const { indentTask, outdentTask, moveTaskUnder } = useTaskTree();
   const [completing, setCompleting] = useState<string[]>([]);
   const [menuTask, setMenuTask] = useState<Task | null>(null);
   const nodes = buildTaskTree(tasks, all);
 
+  const { todayISO } = useLive();
+  const listDay = day ?? todayISO;
+
   const handleToggle = (task: Task) => {
-    if (!hideDone || task.status === 'done') {
-      toggleTask(task.id);
+    if (!hideDone || isDoneOn(task, listDay)) {
+      toggleTask(task.id, listDay);
       return;
     }
     if (completing.includes(task.id)) return;
     // короткая пауза, чтобы отметка была видна перед исчезновением
     setCompleting((prev) => [...prev, task.id]);
     window.setTimeout(() => {
-      toggleTask(task.id);
+      toggleTask(task.id, listDay);
       setCompleting((prev) => prev.filter((id) => id !== task.id));
     }, 450);
   };
@@ -56,6 +63,7 @@ export function TaskList({ tasks, look, divider = 'divide-line', hideDone = fals
     look={extra.sub ? { ...look, onMove: null } : look}
     drag={drag}
     parentTitle={extra.parentTitle}
+    day={listDay}
     completing={completing.includes(task.id)}
     onToggle={handleToggle}
     onMenu={setMenuTask}

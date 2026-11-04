@@ -41,6 +41,8 @@ interface TaskItemProps {
   onOutdent?: () => void;
   /** подзадача без родителя в этом списке: «↳ Название родителя» */
   parentTitle?: string;
+  /** день списка — для отметки вхождения повторяющегося дела */
+  day?: string;
 }
 
 /** «На сегодня»: дата = сегодня без времени; повторное нажатие снимает дату */
@@ -67,7 +69,7 @@ function TodayToggle({ task }: {task: Task;}) {
 }
 
 /** Одна строка дела на всех экранах: жесты, правка на месте, пункты */
-export function TaskItem({ task, look, drag, completing, onToggle, onMenu, onIndent, onOutdent, parentTitle }: TaskItemProps) {
+export function TaskItem({ task, look, drag, completing, onToggle, onMenu, onIndent, onOutdent, parentTitle, day }: TaskItemProps) {
   const { checklists, tasks } = useApp();
   const { editingId, startEdit } = useQuickAdd();
   const remove = useTaskDelete();
@@ -103,6 +105,7 @@ export function TaskItem({ task, look, drag, completing, onToggle, onMenu, onInd
           sphereColor={look.sphereColor}
           showPrefix={look.showPrefix}
           durationInMeta={look.durationInMeta}
+          day={day}
           checked={completing || undefined}
           onToggle={onToggle ? () => onToggle(task) : undefined}
           onOpen={(t) => startEdit(t.id)}

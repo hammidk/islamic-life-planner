@@ -9,7 +9,7 @@ import { normalize } from '../utils/userData';
 import { render } from '@testing-library/react';
 import { AppProvider } from '../contexts/AppContext';
 import { emptySnapshot } from '../utils/userData';
-import type { Task } from '../types';
+import type { RepeatRule, Task } from '../types';
 
 // 2026-11-02 — понедельник, 03 — вторник, 04 — среда, 06 — пятница, 08 — воскресенье
 const MON = '2026-11-02';
@@ -66,7 +66,7 @@ describe('другие повторы на «Сегодня» (сегодня �
   ['каждые 2 недели', { kind: 'weeks', every: 2 }, '2026-10-21', true],
   ['каждый месяц (то же число)', { kind: 'monthly' }, '2026-09-04', true],
   ['каждый месяц, другое число', { kind: 'monthly' }, '2026-09-05', false]] as
-  const)('%s', (_name, repeat, date, visible) => {
+  [string, RepeatRule, string, boolean][])('%s', (_name, repeat, date, visible) => {
     setTestDay(WED);
     renderApp('/today', { tasks: [training({ repeat, date })] });
     expect(onToday() !== null).toBe(visible);

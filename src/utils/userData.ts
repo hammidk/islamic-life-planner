@@ -14,6 +14,7 @@ import { prunePlacement } from './blockPlacement';
 import type { BlockPlacement } from './blockPlacement';
 import { todayISO } from './prayer';
 import { normalizeCustomSpheres } from './spheres';
+import { pruneDoneDates } from './occurrence';
 
 /** Всё, что принадлежит пользователю и сохраняется в облаке */
 export interface UserSnapshot {
@@ -124,6 +125,13 @@ export function normalize(raw: unknown): UserSnapshot | null {
     if (!next.period) next = { ...next, period: 'untilDhuhr' };
     if (!next.sphere) next = { ...next, sphere: 'other' };
     if (typeof next.date === 'string' && next.date.trim() === '') next = { ...next, date: undefined };
+    if ('doneDates' in next) {
+      // отметки вхождений повторов: только корректные даты не старше 60 дней
+      const doneDates = pruneDoneDates(next.doneDates, todayISO());
+      next = { ...next };
+      if (doneDates) next.doneDates = doneDates;else
+      delete next.doneDates;
+    }
     return next;
   });
   return {

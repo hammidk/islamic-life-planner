@@ -4,6 +4,7 @@ import { animate, motion, useMotionValue } from 'framer-motion';
 import type { PanInfo } from 'framer-motion';
 import { CheckIcon } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
+import { isDoneOn, occursOn } from '../utils/occurrence';
 import { useLive } from '../contexts/LiveDataContext';
 import { getCurrentWeek } from '../utils/calendar';
 import type { WeekDay } from '../utils/calendar';
@@ -33,7 +34,7 @@ export function WeekSwiper() {
     setOffset(0);
   }, [todayISO]);
 
-  const active = tasks.filter((t) => t.date && t.status !== 'cancelled');
+  const active = tasks.filter((t) => t.status !== 'cancelled');
 
   const shift = (dir: 1 | -1) => {
     const width = viewportRef.current?.offsetWidth ?? 0;
@@ -59,9 +60,9 @@ export function WeekSwiper() {
   const renderWeek = (weekOffset: number) =>
   <div key={weekOffset} className="grid w-1/3 shrink-0 grid-cols-7 gap-1 px-0.5 pb-1 pt-0.5">
       {weekOf(weekOffset).map((day) => {
-      const dayTasks = active.filter((t) => t.date === day.date);
+      const dayTasks = active.filter((t) => occursOn(t, day.date));
       const count = dayTasks.length;
-      const allDone = count > 0 && dayTasks.every((t) => t.status === 'done');
+      const allDone = count > 0 && dayTasks.every((t) => isDoneOn(t, day.date));
       return (
         <button
           key={day.date}

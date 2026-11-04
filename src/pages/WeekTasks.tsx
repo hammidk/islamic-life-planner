@@ -5,6 +5,7 @@ import { Shell } from '../components/Shell';
 import { ProfileButton } from '../components/ProfileButton';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { useApp } from '../contexts/AppContext';
+import { occursOn } from '../utils/occurrence';
 import { useLive } from '../contexts/LiveDataContext';
 import { getMonthGrid, getWeekDays } from '../utils/calendar';
 import { weekdayShort } from '../utils/taskOptions';
@@ -62,8 +63,8 @@ export function WeekTasks() {
       /* без хранилища выбор просто не запомнится */}
   };
 
-  const active = tasks.filter((t) => t.status !== 'cancelled' && t.date);
-  const countFor = (date: string) => active.filter((t) => t.date === date).length;
+  /** дела дня, повторяющиеся — во все дни по правилу */
+  const countFor = (date: string) => tasks.filter((t) => occursOn(t, date)).length;
 
   const week = getWeekDays(weekOffset);
   const month = getMonthGrid(monthOffset);

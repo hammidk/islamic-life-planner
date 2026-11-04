@@ -17,6 +17,7 @@ import { TodaySphereList } from '../components/today/TodaySphereList';
 import { BlockDragLayer } from '../components/today/BlockDragLayer';
 import { applyPlacement, flattenPlan, planItemId, shiftPlacement } from '../utils/blockPlacement';
 import { compareOrder } from '../utils/taskOptions';
+import { isDoneOn, isOpenOn, isRepeating, occursOn } from '../utils/occurrence';
 import type { Task } from '../types';
 
 const byTime = (a: Task, b: Task) =>
@@ -38,7 +39,7 @@ function OtherDayView({ date }: {date: string;}) {
   const { openQuickAdd } = useQuickAdd();
   useInlineCreateHost({ date });
 
-  const dayTasks = tasks.filter((t) => t.date === date && t.status !== 'cancelled');
+  const dayTasks = tasks.filter((t) => occursOn(t, date));
   const timed = dayTasks.filter((t) => t.time).sort(byTime);
   const untimed = dayTasks.filter((t) => !t.time).sort(compareOrder);
   const ordered = [...timed, ...untimed];
@@ -48,7 +49,7 @@ function OtherDayView({ date }: {date: string;}) {
       <SubHeader title={formatDateLabel(date)} subtitle={`${dayTasks.length} дел`} />
       <InlineCreate />
       {ordered.length > 0 ?
-      <DayTaskList tasks={ordered} divider="divide-line" surface="bg-canvas" showDate={false} /> :
+      <DayTaskList tasks={ordered} divider="divide-line" surface="bg-canvas" showDate={false} day={date} /> :
 
       <EmptyDay onAdd={() => openQuickAdd({ date })} />
       }
@@ -73,7 +74,7 @@ function EmptyDay({ onAdd }: {onAdd: () => void;}) {
 }
 
 /** «История · N» внизу «Сегодня»: свёрнута по умолчанию; снятие отметки возвращает дело на место */
-function HistoryBlock({ tasks }: {tasks: Task[];}) {
+function HistoryBlock({ tasks, day }: {tasks: Task[];day: string;}) {
   const [open, setOpen] = React.useState(false);
   return (
     <section className="mt-6">
@@ -92,7 +93,7 @@ function HistoryBlock({ tasks }: {tasks: Task[];}) {
       </button>
       {open ?
       <div className="opacity-70">
-          <DayTaskList tasks={tasks} divider="divide-line" surface="bg-canvas" showDate={false} />
+          <DayTaskList tasks={tasks} divider="divide-line" surface="bg-canvas" showDate={false} day={day} />
         </div> :
       null}
     </section>);
@@ -136,11 +137,19 @@ function TodayView({ date }: {date: string;}) {
   const todayEntry = journal.find((e) => e.date === date);
   const { next, until } = getPrayerState(minutes);
 
-  const dayTasks = tasks.filter((t) => t.date === date && t.status !== 'cancelled');
+  /** вхождения дня: повторяющиеся дела — по правилу повтора */
+  const dayTasks = tasks.filter((t) => occursOn(t, date));
   const timed = dayTasks.filter((t) => t.time);
-  /** История: выполненные сегодня (в старых данных без completedOn — дела на сегодня) */
+  /**
+   * История: выполненные сегодня — у повторов выполненное вхождение дня,
+   * у обычных — completedOn (в старых данных без него — дела на сегодня)
+   */
   const done = tasks.
-  filter((t) => t.status === 'done' && (t.completedOn ? t.completedOn === date : t.date === date)).
+  filter((t) =>
+  isRepeating(t) ?
+  t.status !== 'cancelled' && isDoneOn(t, date) :
+  t.status === 'done' && (t.completedOn ? t.completedOn === date : occursOn(t, date))
+  ).
   sort((a, b) => (a.completedAt ?? '').localeCompare(b.completedAt ?? ''));
 
   const listTasks = (sphere: 'rizq' | 'other') =>
@@ -148,9 +157,8 @@ function TodayView({ date }: {date: string;}) {
   filter(
     (t) =>
     t.sphere === sphere &&
-    t.status === 'open' &&
     !t.time && (
-    !t.date || t.date === date)
+    isRepeating(t) ? isOpenOn(t, date) : t.status === 'open' && (!t.date || occursOn(t, date)))
   ).
   sort(compareOrder);
 
@@ -159,7 +167,7 @@ function TodayView({ date }: {date: string;}) {
     sunrise,
     tahajjud,
     now: minutes,
-    timedTasks: timed.filter((t) => t.status === 'open'),
+    timedTasks: timed.filter((t) => isOpenOn(t, date)),
     busyTasks: timed,
     prayersDone,
     rizqSlot: sphereSlots.rizq
@@ -185,6 +193,7 @@ function TodayView({ date }: {date: string;}) {
           surface="bg-canvas"
           showDate={false}
           sphereColor
+          day={date}
           hideDone />
 
       );
@@ -293,7 +302,7 @@ function TodayView({ date }: {date: string;}) {
         </BlockDragLayer>
       }
 
-      {done.length > 0 ? <HistoryBlock tasks={done} /> : null}
+      {done.length > 0 ? <HistoryBlock tasks={done} day={date} /> : null}
     </Shell>);
 
 }

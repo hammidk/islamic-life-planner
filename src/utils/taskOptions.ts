@@ -11,6 +11,7 @@ import {
 'date-fns';
 import { ru } from 'date-fns/locale';
 import { todayISO } from './prayer';
+import { isRepeating, nextOccurrence } from './occurrence';
 import type { Reminder, RepeatRule, Task } from '../types';
 
 /** Ручной порядок внутри списка */
@@ -91,8 +92,9 @@ export function formatTaskDate(date?: string): string {
 }
 
 /** «Вт 10:00» или «Вт» (без времени) перед названием — если у дела есть дата */
-export function formatTimePrefix(task: Task): string | null {
-  const d = safeParseISO(task.date);
+/** у повторяющегося дела — день недели ближайшего вхождения начиная с from */
+export function formatTimePrefix(task: Task, from?: string): string | null {
+  const d = safeParseISO(from && isRepeating(task) ? nextOccurrence(task, from) ?? task.date : task.date);
   if (!d) return null;
   const day = weekdayShort[(d.getDay() + 6) % 7];
   return task.time ? `${day} ${task.time}` : day;

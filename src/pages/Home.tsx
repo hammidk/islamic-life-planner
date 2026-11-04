@@ -17,6 +17,7 @@ import { useApp } from '../contexts/AppContext';
 import { useLive } from '../contexts/LiveDataContext';
 import { useSpheres } from '../hooks/useSpheres';
 import { fromMinutes } from '../utils/prayer';
+import { isOpenOn } from '../utils/occurrence';
 
 /** «1 дело», «3 дела», «5 дел» */
 const tasksWord = (count: number): string => {
@@ -59,7 +60,8 @@ export function Home() {
   const { minutes, todayISO, todayFullLabel, hijriLabel, weather } = useLive();
 
   const open = tasks.filter((t) => t.status === 'open');
-  const todayOpen = open.filter((t) => t.date === todayISO);
+  /** осталось сегодня: невыполненные вхождения дня, в том числе повторы */
+  const todayOpen = tasks.filter((t) => isOpenOn(t, todayISO));
 
   return (
     <Shell nav>
