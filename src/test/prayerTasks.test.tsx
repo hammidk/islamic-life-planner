@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { normalize } from '../utils/userData';
 import { moveUnder } from '../utils/taskTree';
-import { act, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { appState, makeTask, renderApp } from './renderApp';
 import { TEST_TODAY, setTestDay } from './setup';
@@ -157,5 +157,31 @@ describe('задачи намаза вне «Сегодня»', () => {
     const tasks = [parent, makeTask('Дуа', { sphere: 'other', date: TEST_TODAY })];
     const res = moveUnder(tasks, tasks[1].id, parent.id);
     expect(res.ok && res.tasks[1]).toMatchObject({ parentId: parent.id, prayerId: 'asr', sphere: 'faith' });
+  });
+});
+
+describe('«Привязка к намазу…»', () => {
+  const pick = async (user: ReturnType<typeof userEvent.setup>, title: string, option: string) => {
+    fireEvent.contextMenu(screen.getByLabelText(title));
+    await user.click(await screen.findByRole('button', { name: /Привязка к намазу/ }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Привязка к намазу' })).getByRole('button', { name: option }));
+  };
+
+  it('перенос из Аср в Магриб, затем «Без привязки»', async () => {
+    const user = userEvent.setup();
+    const task = makeTask('Сунна', { sphere: 'faith', prayerId: 'asr', date: TEST_TODAY });
+    const sub = makeTask('Дуа', { sphere: 'faith', prayerId: 'asr', date: TEST_TODAY, parentId: task.id });
+    renderApp('/sphere/faith', { tasks: [task, sub] });
+    await pick(user, 'Сунна', 'Магриб');
+    expect(appState.tasks.map((t) => t.prayerId)).toEqual(['maghrib', 'maghrib']);
+    await pick(user, 'Сунна', 'Без привязки');
+    expect(appState.tasks.map((t) => t.prayerId)).toEqual([undefined, undefined]);
+  });
+
+  it('обычную задачу можно привязать; без даты она начинается сегодня', async () => {
+    const user = userEvent.setup();
+    renderApp('/sphere/faith', { tasks: [makeTask('Чтение', { sphere: 'faith' })] });
+    await pick(user, 'Чтение', 'Иша');
+    expect(appState.tasks[0]).toMatchObject({ prayerId: 'isha', date: TEST_TODAY });
   });
 });
